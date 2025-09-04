@@ -1,0 +1,2665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArchaeoVision Pro - Archaeological Image Enhancement Suite</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f1f5f9;
+            --border: #e2e8f0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        .app-container {
+            display: flex;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        /* Header Bar */
+        .header-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: var(--dark);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        .logo-icon {
+            width: 35px;
+            height: 35px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .header-btn {
+            padding: 8px 16px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: transparent;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+        
+        .header-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.4);
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            background: white;
+            margin-top: 60px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+            transition: transform 0.3s;
+        }
+        
+        .sidebar.collapsed {
+            transform: translateX(-320px);
+            margin-left: -320px;
+        }
+        
+        .sidebar-tabs {
+            display: flex;
+            background: var(--light);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .sidebar-tab {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--secondary);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .sidebar-tab.active {
+            background: white;
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .tab-panel {
+            display: none;
+        }
+        
+        .tab-panel.active {
+            display: block;
+        }
+        
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-top: 60px;
+        }
+        
+        /* Toolbar */
+        .toolbar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 10px 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .tool-group {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            padding-right: 20px;
+            border-right: 1px solid var(--border);
+        }
+        
+        .tool-group:last-child {
+            border-right: none;
+        }
+        
+        .tool-btn {
+            padding: 6px 10px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85rem;
+            color: var(--secondary);
+        }
+        
+        .tool-btn:hover {
+            background: var(--light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .tool-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        /* Canvas Area */
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            background: #f8f9fa;
+            overflow: hidden;
+        }
+        
+        .canvas-wrapper {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: transform 0.3s;
+        }
+        
+        .main-canvas {
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            background: white;
+            cursor: grab;
+        }
+        
+        .main-canvas.grabbing {
+            cursor: grabbing;
+        }
+        
+        .overlay-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+        
+        .annotation-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+        
+        /* Welcome Screen */
+        .welcome-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            max-width: 500px;
+        }
+        
+        .welcome-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        
+        .welcome-title {
+            font-size: 1.8rem;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+        
+        .welcome-subtitle {
+            color: var(--secondary);
+            margin-bottom: 30px;
+        }
+        
+        .upload-zone {
+            border: 3px dashed var(--primary);
+            border-radius: 12px;
+            padding: 40px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-zone:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+        }
+        
+        .upload-zone.dragging {
+            background: rgba(102, 126, 234, 0.2);
+            border-color: var(--primary-dark);
+        }
+        
+        /* Controls Styling */
+        .control-section {
+            margin-bottom: 25px;
+        }
+        
+        .control-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .control-title {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .control-badge {
+            background: var(--primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+        }
+        
+        /* Quick Actions Grid */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .quick-action-btn {
+            padding: 12px 8px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+            color: var(--secondary);
+        }
+        
+        .quick-action-btn:hover {
+            background: var(--light);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .quick-action-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .quick-action-icon {
+            font-size: 1.5rem;
+        }
+        
+        /* Enhanced Sliders */
+        .slider-control {
+            margin-bottom: 20px;
+        }
+        
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .slider-label {
+            font-size: 0.9rem;
+            color: var(--secondary);
+        }
+        
+        .slider-value {
+            background: var(--light);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--primary);
+            min-width: 50px;
+            text-align: center;
+        }
+        
+        .slider-wrapper {
+            position: relative;
+            padding: 5px 0;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--light);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+            transition: all 0.3s;
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 3px 12px rgba(37, 99, 235, 0.5);
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+            transition: all 0.3s;
+        }
+        
+        /* Preset Cards */
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .preset-card {
+            padding: 15px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .preset-card:hover {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(37, 99, 235, 0.1));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.15);
+        }
+        
+        .preset-card.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .preset-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+        
+        .preset-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+        
+        .preset-desc {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+        
+        /* Info Cards */
+        .info-card {
+            background: linear-gradient(135deg, var(--light), white);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border);
+        }
+        
+        .info-card-title {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-card-content {
+            font-size: 0.85rem;
+            color: var(--secondary);
+            line-height: 1.5;
+        }
+        
+        /* Status Bar */
+        .status-bar {
+            background: white;
+            border-top: 1px solid var(--border);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--secondary);
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Progress Indicator */
+        .progress-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        
+        .progress-overlay.active {
+            display: flex;
+        }
+        
+        .progress-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .progress-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--light);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .progress-text {
+            color: var(--dark);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .progress-subtext {
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+        
+        /* Histogram Display */
+        .histogram-container {
+            height: 120px;
+            background: var(--light);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .histogram-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Layer Panel */
+        .layer-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .layer-item:hover {
+            background: var(--light);
+            border-color: var(--primary);
+        }
+        
+        .layer-item.active {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(37, 99, 235, 0.05));
+            border-color: var(--primary);
+        }
+        
+        .layer-visibility {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        .layer-name {
+            flex: 1;
+            font-size: 0.9rem;
+        }
+        
+        .layer-opacity {
+            width: 60px;
+            height: 4px;
+        }
+        
+        /* Tooltips */
+        .tooltip {
+            position: relative;
+        }
+        
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            margin-bottom: 5px;
+        }
+        
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+        
+        /* Comparison Slider */
+        .comparison-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .comparison-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .comparison-slider {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--primary);
+            cursor: ew-resize;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .comparison-slider::before {
+            content: '↔';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--primary);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+        }
+        
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn-full {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        /* Input Groups */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .input-field {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        /* Checkbox & Radio */
+        .checkbox-wrapper, .radio-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        
+        .checkbox, .radio {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        /* Dropdown */
+        .dropdown {
+            position: relative;
+        }
+        
+        .dropdown-toggle {
+            padding: 10px 15px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-top: 5px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            display: none;
+            z-index: 100;
+        }
+        
+        .dropdown-menu.show {
+            display: block;
+        }
+        
+        .dropdown-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .dropdown-item:hover {
+            background: var(--light);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                z-index: 999;
+                box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            }
+            
+            .tool-group {
+                flex-wrap: wrap;
+            }
+            
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .preset-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        /* Hide scrollbars but keep functionality */
+        .sidebar-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .sidebar-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .sidebar-content::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+        
+        .sidebar-content::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary);
+        }
+        
+        /* Hidden elements */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Keyboard shortcuts modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .modal-close {
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: var(--light);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .modal-close:hover {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .shortcuts-grid {
+            display: grid;
+            gap: 10px;
+        }
+        
+        .shortcut-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: var(--light);
+            border-radius: 8px;
+        }
+        
+        .shortcut-key {
+            background: var(--dark);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Bar -->
+    <div class="header-bar">
+        <div class="logo">
+            <div class="logo-icon">🏛️</div>
+            <span>ArchaeoVision Pro</span>
+        </div>
+        <div class="header-actions">
+            <button class="header-btn" onclick="toggleSidebar()">☰ Toggle Sidebar</button>
+            <button class="header-btn" onclick="showShortcuts()">⌨️ Shortcuts</button>
+            <button class="header-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+            <button class="header-btn" onclick="showHelp()">❓ Help</button>
+        </div>
+    </div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-tabs">
+                <button class="sidebar-tab active" onclick="switchTab('enhance')">
+                    <span>🎨</span>
+                    <span>Enhance</span>
+                </button>
+                <button class="sidebar-tab" onclick="switchTab('measure')">
+                    <span>📏</span>
+                    <span>Measure</span>
+                </button>
+                <button class="sidebar-tab" onclick="switchTab('annotate')">
+                    <span>✏️</span>
+                    <span>Annotate</span>
+                </button>
+                <button class="sidebar-tab" onclick="switchTab('layers')">
+                    <span>📚</span>
+                    <span>Layers</span>
+                </button>
+            </div>
+            
+            <div class="sidebar-content">
+                <!-- Enhancement Tab -->
+                <div class="tab-panel active" id="enhance-tab">
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>⚡</span>
+                                <span>Quick Actions</span>
+                                <span class="control-badge">AI</span>
+                            </div>
+                        </div>
+                        <div class="quick-actions">
+                            <button class="quick-action-btn" onclick="autoEnhance()">
+                                <div class="quick-action-icon">✨</div>
+                                <div>Auto</div>
+                            </button>
+                            <button class="quick-action-btn" onclick="applyPreset('dstretch')">
+                                <div class="quick-action-icon">🎯</div>
+                                <div>DStretch</div>
+                            </button>
+                            <button class="quick-action-btn" onclick="applyPreset('ochre')">
+                                <div class="quick-action-icon">🟥</div>
+                                <div>Ochre</div>
+                            </button>
+                            <button class="quick-action-btn" onclick="applyPreset('carbon')">
+                                <div class="quick-action-icon">⚫</div>
+                                <div>Carbon</div>
+                            </button>
+                            <button class="quick-action-btn" onclick="applyPreset('pca')">
+                                <div class="quick-action-icon">📊</div>
+                                <div>PCA</div>
+                            </button>
+                            <button class="quick-action-btn" onclick="applyPreset('edge')">
+                                <div class="quick-action-icon">🔲</div>
+                                <div>Edges</div>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>🎨</span>
+                                <span>Enhancement Presets</span>
+                            </div>
+                        </div>
+                        <div class="preset-grid">
+                            <div class="preset-card" onclick="selectPreset('dstretch-lds')">
+                                <div class="preset-icon">🌈</div>
+                                <div class="preset-name">DStretch LDS</div>
+                                <div class="preset-desc">General enhancement</div>
+                            </div>
+                            <div class="preset-card" onclick="selectPreset('dstretch-yre')">
+                                <div class="preset-icon">🔴</div>
+                                <div class="preset-name">DStretch YRE</div>
+                                <div class="preset-desc">Red pigments</div>
+                            </div>
+                            <div class="preset-card" onclick="selectPreset('egyptian-blue')">
+                                <div class="preset-icon">🔷</div>
+                                <div class="preset-name">Egyptian Blue</div>
+                                <div class="preset-desc">VIL simulation</div>
+                            </div>
+                            <div class="preset-card" onclick="selectPreset('false-color')">
+                                <div class="preset-icon">🌸</div>
+                                <div class="preset-name">False Color</div>
+                                <div class="preset-desc">Spectral shift</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>🔧</span>
+                                <span>Manual Adjustments</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Brightness</span>
+                                <span class="slider-value" id="brightness-value">0</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" id="brightness" min="-100" max="100" value="0">
+                            </div>
+                        </div>
+                        
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Contrast</span>
+                                <span class="slider-value" id="contrast-value">0</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" id="contrast" min="-100" max="100" value="0">
+                            </div>
+                        </div>
+                        
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Saturation</span>
+                                <span class="slider-value" id="saturation-value">0</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" id="saturation" min="-100" max="100" value="0">
+                            </div>
+                        </div>
+                        
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Gamma</span>
+                                <span class="slider-value" id="gamma-value">1.0</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" id="gamma" min="0.1" max="3" step="0.1" value="1">
+                            </div>
+                        </div>
+                        
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="checkbox" id="histogram">
+                            <label for="histogram">Histogram Equalization</label>
+                        </div>
+                        
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="checkbox" id="sharpen">
+                            <label for="sharpen">Unsharp Mask</label>
+                        </div>
+                        
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="checkbox" id="denoise">
+                            <label for="denoise">Noise Reduction</label>
+                        </div>
+                    </div>
+                    
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>📊</span>
+                                <span>Histogram</span>
+                            </div>
+                        </div>
+                        <div class="histogram-container">
+                            <canvas id="histogram-canvas" class="histogram-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Measurement Tab -->
+                <div class="tab-panel" id="measure-tab">
+                    <div class="info-card">
+                        <div class="info-card-title">
+                            <span>📏</span>
+                            <span>Measurement Tools</span>
+                        </div>
+                        <div class="info-card-content">
+                            Click points on the image to measure distances and areas. Calibrate with a known reference for accurate real-world measurements.
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-primary btn-full" onclick="startMeasurement('line')">
+                            <span>📐</span>
+                            <span>Measure Distance</span>
+                        </button>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-primary btn-full" onclick="startMeasurement('area')">
+                            <span>📦</span>
+                            <span>Measure Area</span>
+                        </button>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-warning btn-full" onclick="startMeasurement('angle')">
+                            <span>📐</span>
+                            <span>Measure Angle</span>
+                        </button>
+                    </div>
+                    
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>⚙️</span>
+                                <span>Calibration</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <input type="number" class="input-field" id="calibration-value" placeholder="Known distance (mm)">
+                            <button class="btn btn-primary" onclick="setCalibration()">Set</button>
+                        </div>
+                    </div>
+                    
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>📊</span>
+                                <span>Measurements</span>
+                            </div>
+                        </div>
+                        <div id="measurement-list">
+                            <!-- Measurements will be listed here -->
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="clearMeasurements()">Clear All</button>
+                        <button class="btn btn-success" onclick="exportMeasurements()">Export</button>
+                    </div>
+                </div>
+                
+                <!-- Annotation Tab -->
+                <div class="tab-panel" id="annotate-tab">
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>✏️</span>
+                                <span>Drawing Tools</span>
+                            </div>
+                        </div>
+                        <div class="quick-actions">
+                            <button class="quick-action-btn" onclick="setTool('pen')">
+                                <div class="quick-action-icon">✏️</div>
+                                <div>Pen</div>
+                            </button>
+                            <button class="quick-action-btn" onclick="setTool('marker')">
+                                <div class="quick-action-icon">🖊️</div>
+                                <div>Marker</div>
+                            </button>
+                            <button class="quick-action-btn" onclick="setTool('text')">
+                                <div class="quick-action-icon">📝</div>
+                                <div>Text</div>
+                            </button>
+                            <button class="quick-action-btn" onclick="setTool('arrow')">
+                                <div class="quick-action-icon">➡️</div>
+                                <div>Arrow</div>
+                            </button>
+                            <button class="quick-action-btn" onclick="setTool('rect')">
+                                <div class="quick-action-icon">⬜</div>
+                                <div>Rectangle</div>
+                            </button>
+                            <button class="quick-action-btn" onclick="setTool('circle')">
+                                <div class="quick-action-icon">⭕</div>
+                                <div>Circle</div>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>🎨</span>
+                                <span>Color & Style</span>
+                            </div>
+                        </div>
+                        <input type="color" class="input-field" id="annotation-color" value="#ff0000">
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Line Width</span>
+                                <span class="slider-value" id="line-width-value">2</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" id="line-width" min="1" max="20" value="2">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="undoAnnotation()">↶ Undo</button>
+                        <button class="btn btn-secondary" onclick="redoAnnotation()">↷ Redo</button>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-danger btn-full" onclick="clearAnnotations()">Clear All Annotations</button>
+                    </div>
+                </div>
+                
+                <!-- Layers Tab -->
+                <div class="tab-panel" id="layers-tab">
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>📚</span>
+                                <span>Image Layers</span>
+                            </div>
+                        </div>
+                        <div id="layers-list">
+                            <div class="layer-item active">
+                                <input type="checkbox" class="layer-visibility" checked>
+                                <span class="layer-name">Original</span>
+                                <input type="range" class="layer-opacity slider" min="0" max="100" value="100">
+                            </div>
+                            <!-- More layers will be added dynamically -->
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary btn-full" onclick="addLayer()">
+                                <span>➕</span>
+                                <span>Add Layer</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>🔄</span>
+                                <span>Blend Modes</span>
+                            </div>
+                        </div>
+                        <select class="input-field" id="blend-mode">
+                            <option value="normal">Normal</option>
+                            <option value="multiply">Multiply</option>
+                            <option value="screen">Screen</option>
+                            <option value="overlay">Overlay</option>
+                            <option value="difference">Difference</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="tool-group">
+                    <button class="tool-btn" onclick="loadImage()" data-tooltip="Open Image">
+                        <span>📁</span>
+                        <span>Open</span>
+                    </button>
+                    <button class="tool-btn" onclick="saveImage()" data-tooltip="Save Image">
+                        <span>💾</span>
+                        <span>Save</span>
+                    </button>
+                    <button class="tool-btn" onclick="exportImage()" data-tooltip="Export">
+                        <span>📤</span>
+                        <span>Export</span>
+                    </button>
+                </div>
+                
+                <div class="tool-group">
+                    <button class="tool-btn" onclick="undo()" data-tooltip="Undo (Ctrl+Z)">
+                        <span>↶</span>
+                    </button>
+                    <button class="tool-btn" onclick="redo()" data-tooltip="Redo (Ctrl+Y)">
+                        <span>↷</span>
+                    </button>
+                    <button class="tool-btn" onclick="resetImage()" data-tooltip="Reset">
+                        <span>🔄</span>
+                    </button>
+                </div>
+                
+                <div class="tool-group">
+                    <button class="tool-btn" onclick="zoomIn()" data-tooltip="Zoom In">
+                        <span>🔍+</span>
+                    </button>
+                    <button class="tool-btn" onclick="zoomOut()" data-tooltip="Zoom Out">
+                        <span>🔍-</span>
+                    </button>
+                    <button class="tool-btn" onclick="fitToScreen()" data-tooltip="Fit to Screen">
+                        <span>⛶</span>
+                    </button>
+                    <span style="padding: 0 10px; color: var(--secondary);" id="zoom-level">100%</span>
+                </div>
+                
+                <div class="tool-group">
+                    <button class="tool-btn" onclick="rotateLeft()" data-tooltip="Rotate Left">
+                        <span>↺</span>
+                    </button>
+                    <button class="tool-btn" onclick="rotateRight()" data-tooltip="Rotate Right">
+                        <span>↻</span>
+                    </button>
+                    <button class="tool-btn" onclick="flipHorizontal()" data-tooltip="Flip Horizontal">
+                        <span>↔</span>
+                    </button>
+                    <button class="tool-btn" onclick="flipVertical()" data-tooltip="Flip Vertical">
+                        <span>↕</span>
+                    </button>
+                </div>
+                
+                <div class="tool-group">
+                    <button class="tool-btn" onclick="toggleComparison()" data-tooltip="Before/After">
+                        <span>👁️</span>
+                        <span>Compare</span>
+                    </button>
+                    <button class="tool-btn" onclick="toggleGrid()" data-tooltip="Grid">
+                        <span>#</span>
+                    </button>
+                    <button class="tool-btn" onclick="colorPicker()" data-tooltip="Color Picker">
+                        <span>💧</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Canvas Container -->
+            <div class="canvas-container" id="canvas-container">
+                <!-- Welcome Screen -->
+                <div class="welcome-screen" id="welcome-screen">
+                    <div class="welcome-icon">🏛️</div>
+                    <h2 class="welcome-title">Welcome to ArchaeoVision Pro</h2>
+                    <p class="welcome-subtitle">Professional archaeological image enhancement suite</p>
+                    <div class="upload-zone" id="upload-zone">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">📷</div>
+                        <div style="font-weight: 600; margin-bottom: 5px;">Drop your image here</div>
+                        <div style="color: var(--secondary); font-size: 0.9rem;">or click to browse</div>
+                        <div style="margin-top: 15px; font-size: 0.8rem; color: var(--secondary);">
+                            Supports: JPG, PNG, TIFF, RAW
+                        </div>
+                    </div>
+                    <input type="file" id="file-input" accept="image/*" style="display: none;">
+                </div>
+                
+                <!-- Canvas Wrapper -->
+                <div class="canvas-wrapper hidden" id="canvas-wrapper">
+                    <canvas id="main-canvas" class="main-canvas"></canvas>
+                    <canvas id="overlay-canvas" class="overlay-canvas"></canvas>
+                    <div id="annotation-layer" class="annotation-layer"></div>
+                </div>
+            </div>
+            
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-indicator"></span>
+                    <span id="status-text">Ready</span>
+                </div>
+                <div class="status-item" id="image-info">
+                    <!-- Image info will appear here -->
+                </div>
+                <div class="status-item" id="cursor-info">
+                    <!-- Cursor position and color info -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Progress Overlay -->
+    <div class="progress-overlay" id="progress-overlay">
+        <div class="progress-card">
+            <div class="progress-spinner"></div>
+            <div class="progress-text" id="progress-text">Processing...</div>
+            <div class="progress-subtext" id="progress-subtext">Please wait</div>
+        </div>
+    </div>
+    
+    <!-- Shortcuts Modal -->
+    <div class="modal" id="shortcuts-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">⌨️ Keyboard Shortcuts</h2>
+                <button class="modal-close" onclick="closeModal('shortcuts-modal')">✕</button>
+            </div>
+            <div class="shortcuts-grid">
+                <div class="shortcut-item">
+                    <span>Open Image</span>
+                    <span class="shortcut-key">Ctrl + O</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Save</span>
+                    <span class="shortcut-key">Ctrl + S</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Undo</span>
+                    <span class="shortcut-key">Ctrl + Z</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Redo</span>
+                    <span class="shortcut-key">Ctrl + Y</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Zoom In</span>
+                    <span class="shortcut-key">Ctrl + +</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Zoom Out</span>
+                    <span class="shortcut-key">Ctrl + -</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Reset Zoom</span>
+                    <span class="shortcut-key">Ctrl + 0</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Auto Enhance</span>
+                    <span class="shortcut-key">Ctrl + E</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Toggle Comparison</span>
+                    <span class="shortcut-key">C</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Toggle Grid</span>
+                    <span class="shortcut-key">G</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Color Picker</span>
+                    <span class="shortcut-key">I</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Fullscreen</span>
+                    <span class="shortcut-key">F11</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // State Management
+        const state = {
+            image: null,
+            originalImage: null,
+            canvas: null,
+            ctx: null,
+            overlayCanvas: null,
+            overlayCtx: null,
+            history: [],
+            historyIndex: -1,
+            zoom: 1,
+            rotation: 0,
+            currentTool: null,
+            isDrawing: false,
+            measurements: [],
+            annotations: [],
+            layers: [],
+            settings: {
+                brightness: 0,
+                contrast: 0,
+                saturation: 0,
+                gamma: 1,
+                histogram: false,
+                sharpen: false,
+                denoise: false
+            },
+            currentPreset: null,
+            pixelsPerMm: 1,
+            isPanning: false,
+            panStart: { x: 0, y: 0 },
+            canvasPosition: { x: 0, y: 0 }
+        };
+        
+        // Initialize Application
+        window.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+            setupEventListeners();
+            loadSavedSettings();
+            setupKeyboardShortcuts();
+            updateHistogram();
+        });
+        
+        function initializeApp() {
+            state.canvas = document.getElementById('main-canvas');
+            state.ctx = state.canvas.getContext('2d');
+            state.overlayCanvas = document.getElementById('overlay-canvas');
+            state.overlayCtx = state.overlayCanvas.getContext('2d');
+            
+            // Setup canvas contexts
+            state.ctx.imageSmoothingEnabled = true;
+            state.ctx.imageSmoothingQuality = 'high';
+        }
+        
+        function setupEventListeners() {
+            // File upload
+            const uploadZone = document.getElementById('upload-zone');
+            const fileInput = document.getElementById('file-input');
+            
+            uploadZone.addEventListener('click', () => fileInput.click());
+            
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('dragging');
+            });
+            
+            uploadZone.addEventListener('dragleave', () => {
+                uploadZone.classList.remove('dragging');
+            });
+            
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragging');
+                handleFile(e.dataTransfer.files[0]);
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                handleFile(e.target.files[0]);
+            });
+            
+            // Canvas mouse events
+            state.canvas.addEventListener('mousedown', handleMouseDown);
+            state.canvas.addEventListener('mousemove', handleMouseMove);
+            state.canvas.addEventListener('mouseup', handleMouseUp);
+            state.canvas.addEventListener('wheel', handleWheel);
+            state.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+            
+            // Sliders
+            document.getElementById('brightness').addEventListener('input', handleSliderChange);
+            document.getElementById('contrast').addEventListener('input', handleSliderChange);
+            document.getElementById('saturation').addEventListener('input', handleSliderChange);
+            document.getElementById('gamma').addEventListener('input', handleSliderChange);
+            document.getElementById('line-width').addEventListener('input', handleSliderChange);
+            
+            // Checkboxes
+            document.getElementById('histogram').addEventListener('change', applyFilters);
+            document.getElementById('sharpen').addEventListener('change', applyFilters);
+            document.getElementById('denoise').addEventListener('change', applyFilters);
+        }
+        
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                // Ctrl/Cmd + O: Open
+                if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
+                    e.preventDefault();
+                    loadImage();
+                }
+                
+                // Ctrl/Cmd + S: Save
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    saveImage();
+                }
+                
+                // Ctrl/Cmd + Z: Undo
+                if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                    e.preventDefault();
+                    undo();
+                }
+                
+                // Ctrl/Cmd + Y: Redo
+                if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+                    e.preventDefault();
+                    redo();
+                }
+                
+                // Ctrl/Cmd + E: Auto Enhance
+                if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                    e.preventDefault();
+                    autoEnhance();
+                }
+                
+                // Ctrl/Cmd + Plus: Zoom In
+                if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '=')) {
+                    e.preventDefault();
+                    zoomIn();
+                }
+                
+                // Ctrl/Cmd + Minus: Zoom Out
+                if ((e.ctrlKey || e.metaKey) && e.key === '-') {
+                    e.preventDefault();
+                    zoomOut();
+                }
+                
+                // Ctrl/Cmd + 0: Reset Zoom
+                if ((e.ctrlKey || e.metaKey) && e.key === '0') {
+                    e.preventDefault();
+                    fitToScreen();
+                }
+                
+                // C: Toggle Comparison
+                if (e.key === 'c' && !e.ctrlKey && !e.metaKey) {
+                    toggleComparison();
+                }
+                
+                // G: Toggle Grid
+                if (e.key === 'g' && !e.ctrlKey && !e.metaKey) {
+                    toggleGrid();
+                }
+                
+                // I: Color Picker
+                if (e.key === 'i' && !e.ctrlKey && !e.metaKey) {
+                    colorPicker();
+                }
+                
+                // Space: Pan
+                if (e.key === ' ') {
+                    e.preventDefault();
+                    state.canvas.style.cursor = 'grab';
+                }
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                if (e.key === ' ') {
+                    state.canvas.style.cursor = 'crosshair';
+                }
+            });
+        }
+        
+        // File Handling
+        function handleFile(file) {
+            if (!file || !file.type.startsWith('image/')) return;
+            
+            showProgress('Loading image...', 'Processing ' + file.name);
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    loadImageToCanvas(img);
+                    updateStatus(`Loaded: ${file.name} (${img.width}×${img.height}px)`);
+                    hideProgress();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function loadImageToCanvas(img) {
+            state.originalImage = img;
+            state.image = img;
+            
+            // Setup canvas dimensions
+            state.canvas.width = img.width;
+            state.canvas.height = img.height;
+            state.overlayCanvas.width = img.width;
+            state.overlayCanvas.height = img.height;
+            
+            // Draw image
+            state.ctx.drawImage(img, 0, 0);
+            
+            // Hide welcome screen
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('canvas-wrapper').classList.remove('hidden');
+            
+            // Initialize history
+            saveToHistory();
+            
+            // Update UI
+            updateHistogram();
+            fitToScreen();
+            
+            // Update image info
+            document.getElementById('image-info').textContent = 
+                `${img.width} × ${img.height} px`;
+        }
+        
+        // Image Processing Functions
+        function autoEnhance() {
+            if (!state.image) return;
+            
+            showProgress('Auto Enhancing...', 'Analyzing image characteristics');
+            
+            setTimeout(() => {
+                // Analyze image and apply best enhancement
+                const imageData = state.ctx.getImageData(0, 0, state.canvas.width, state.canvas.height);
+                const enhanced = analyzeAndEnhance(imageData);
+                state.ctx.putImageData(enhanced, 0, 0);
+                
+                saveToHistory();
+                updateHistogram();
+                hideProgress();
+                updateStatus('Auto enhancement applied');
+            }, 100);
+        }
+        
+        function analyzeAndEnhance(imageData) {
+            // Analyze histogram to determine best enhancement
+            const histogram = calculateHistogram(imageData);
+            const avgBrightness = histogram.reduce((sum, val, i) => sum + val * i, 0) / 
+                                 histogram.reduce((sum, val) => sum + val, 0);
+            
+            // Apply appropriate enhancement based on analysis
+            if (avgBrightness < 80) {
+                // Dark image - brighten and increase contrast
+                return applyBrightnessContrast(imageData, 30, 40);
+            } else if (avgBrightness > 180) {
+                // Bright image - reduce brightness, increase contrast
+                return applyBrightnessContrast(imageData, -20, 30);
+            } else {
+                // Normal image - apply decorrelation stretch
+                return applyDStretch(imageData);
+            }
+        }
+        
+        function applyPreset(preset) {
+            if (!state.image) return;
+            
+            showProgress('Applying preset...', preset.toUpperCase());
+            
+            setTimeout(() => {
+                const imageData = state.ctx.getImageData(0, 0, state.canvas.width, state.canvas.height);
+                let processed;
+                
+                switch(preset) {
+                    case 'dstretch':
+                        processed = applyDStretch(imageData);
+                        break;
+                    case 'ochre':
+                        processed = applyOchreEnhancement(imageData);
+                        break;
+                    case 'carbon':
+                        processed = applyCarbonEnhancement(imageData);
+                        break;
+                    case 'pca':
+                        processed = applyPCAEnhancement(imageData);
+                        break;
+                    case 'edge':
+                        processed = applyEdgeDetection(imageData);
+                        break;
+                    default:
+                        processed = imageData;
+                }
+                
+                state.ctx.putImageData(processed, 0, 0);
+                saveToHistory();
+                updateHistogram();
+                hideProgress();
+                
+                state.currentPreset = preset;
+                updateStatus(`Applied ${preset} preset`);
+            }, 100);
+        }
+        
+        // Core enhancement algorithms
+        function applyDStretch(imageData) {
+            const data = imageData.data;
+            
+            // Calculate statistics
+            let sumR = 0, sumG = 0, sumB = 0;
+            const pixels = data.length / 4;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                sumR += data[i];
+                sumG += data[i + 1];
+                sumB += data[i + 2];
+            }
+            
+            const meanR = sumR / pixels;
+            const meanG = sumG / pixels;
+            const meanB = sumB / pixels;
+            
+            // Apply decorrelation
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i] - meanR;
+                const g = data[i + 1] - meanG;
+                const b = data[i + 2] - meanB;
+                
+                // Decorrelation matrix transformation
+                data[i] = Math.min(255, Math.max(0, meanR + r * 1.5 - g * 0.3 - b * 0.2));
+                data[i + 1] = Math.min(255, Math.max(0, meanG - r * 0.3 + g * 1.5 - b * 0.3));
+                data[i + 2] = Math.min(255, Math.max(0, meanB - r * 0.2 - g * 0.3 + b * 1.5));
+            }
+            
+            return imageData;
+        }
+        
+        function applyOchreEnhancement(imageData) {
+            const data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                
+                // Enhance red ochre
+                data[i] = Math.min(255, Math.max(0, 1.3 * r - 0.3 * g - 0.1 * b));
+                data[i + 1] = Math.min(255, Math.max(0, 0.7 * g + 0.2 * r));
+                data[i + 2] = Math.min(255, Math.max(0, 0.5 * b));
+            }
+            
+            return imageData;
+        }
+        
+        function applyCarbonEnhancement(imageData) {
+            const data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                
+                // Simulate NIR for carbon
+                const nir = r * 0.8 + g * 0.15 + b * 0.05;
+                const ndvi = (nir - r) / (nir + r + 0.001);
+                
+                data[i] = Math.min(255, Math.max(0, nir));
+                data[i + 1] = Math.min(255, Math.max(0, r));
+                data[i + 2] = Math.min(255, Math.max(0, g));
+            }
+            
+            return imageData;
+        }
+        
+        function applyPCAEnhancement(imageData) {
+            const data = imageData.data;
+            const pixels = [];
+            
+            // Collect pixels
+            for (let i = 0; i < data.length; i += 4) {
+                pixels.push([data[i], data[i + 1], data[i + 2]]);
+            }
+            
+            // Calculate means
+            const means = [0, 0, 0];
+            for (const pixel of pixels) {
+                means[0] += pixel[0];
+                means[1] += pixel[1];
+                means[2] += pixel[2];
+            }
+            means[0] /= pixels.length;
+            means[1] /= pixels.length;
+            means[2] /= pixels.length;
+            
+            // Apply PCA transformation
+            for (let i = 0; i < data.length; i += 4) {
+                const idx = i / 4;
+                const r = pixels[idx][0] - means[0];
+                const g = pixels[idx][1] - means[1];
+                const b = pixels[idx][2] - means[2];
+                
+                const pc1 = r * 0.577 + g * 0.577 + b * 0.577;
+                const pc2 = r * 0.707 - b * 0.707;
+                const pc3 = r * 0.408 - g * 0.816 + b * 0.408;
+                
+                data[i] = Math.min(255, Math.max(0, pc1 + 128));
+                data[i + 1] = Math.min(255, Math.max(0, pc2 + 128));
+                data[i + 2] = Math.min(255, Math.max(0, pc3 + 128));
+            }
+            
+            return imageData;
+        }
+        
+        function applyEdgeDetection(imageData) {
+            const data = imageData.data;
+            const width = imageData.width;
+            const height = imageData.height;
+            const output = new Uint8ClampedArray(data);
+            
+            const sobelX = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
+            const sobelY = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
+            
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    let pixelX = 0;
+                    let pixelY = 0;
+                    
+                    for (let j = -1; j <= 1; j++) {
+                        for (let i = -1; i <= 1; i++) {
+                            const idx = ((y + j) * width + (x + i)) * 4;
+                            const gray = data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114;
+                            const kernelIdx = (j + 1) * 3 + (i + 1);
+                            pixelX += gray * sobelX[kernelIdx];
+                            pixelY += gray * sobelY[kernelIdx];
+                        }
+                    }
+                    
+                    const magnitude = Math.sqrt(pixelX * pixelX + pixelY * pixelY);
+                    const idx = (y * width + x) * 4;
+                    
+                    output[idx] = magnitude;
+                    output[idx + 1] = magnitude;
+                    output[idx + 2] = magnitude;
+                }
+            }
+            
+            imageData.data.set(output);
+            return imageData;
+        }
+        
+        function applyBrightnessContrast(imageData, brightness, contrast) {
+            const data = imageData.data;
+            const contrastFactor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+            
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = Math.min(255, Math.max(0, contrastFactor * (data[i] - 128) + 128 + brightness * 2.55));
+                data[i + 1] = Math.min(255, Math.max(0, contrastFactor * (data[i + 1] - 128) + 128 + brightness * 2.55));
+                data[i + 2] = Math.min(255, Math.max(0, contrastFactor * (data[i + 2] - 128) + 128 + brightness * 2.55));
+            }
+            
+            return imageData;
+        }
+        
+        // Slider handling
+        function handleSliderChange(e) {
+            const sliderId = e.target.id;
+            const value = e.target.value;
+            
+            // Update display
+            document.getElementById(`${sliderId}-value`).textContent = 
+                sliderId === 'gamma' ? parseFloat(value).toFixed(1) : value;
+            
+            // Update state
+            state.settings[sliderId] = parseFloat(value);
+            
+            // Apply changes
+            applyFilters();
+        }
+        
+        function applyFilters() {
+            if (!state.image) return;
+            
+            // Start with original image
+            state.ctx.drawImage(state.originalImage, 0, 0);
+            
+            // Get image data
+            let imageData = state.ctx.getImageData(0, 0, state.canvas.width, state.canvas.height);
+            
+            // Apply brightness and contrast
+            if (state.settings.brightness !== 0 || state.settings.contrast !== 0) {
+                imageData = applyBrightnessContrast(imageData, state.settings.brightness, state.settings.contrast);
+            }
+            
+            // Apply saturation
+            if (state.settings.saturation !== 0) {
+                imageData = applySaturation(imageData, state.settings.saturation);
+            }
+            
+            // Apply gamma
+            if (state.settings.gamma !== 1) {
+                imageData = applyGamma(imageData, state.settings.gamma);
+            }
+            
+            // Apply histogram equalization
+            if (document.getElementById('histogram').checked) {
+                imageData = applyHistogramEqualization(imageData);
+            }
+            
+            // Apply sharpening
+            if (document.getElementById('sharpen').checked) {
+                imageData = applySharpen(imageData);
+            }
+            
+            // Apply denoising
+            if (document.getElementById('denoise').checked) {
+                imageData = applyDenoise(imageData);
+            }
+            
+            // Update canvas
+            state.ctx.putImageData(imageData, 0, 0);
+            updateHistogram();
+        }
+        
+        function applySaturation(imageData, saturation) {
+            const data = imageData.data;
+            const saturationFactor = (saturation + 100) / 100;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                data[i] = Math.min(255, Math.max(0, gray + saturationFactor * (data[i] - gray)));
+                data[i + 1] = Math.min(255, Math.max(0, gray + saturationFactor * (data[i + 1] - gray)));
+                data[i + 2] = Math.min(255, Math.max(0, gray + saturationFactor * (data[i + 2] - gray)));
+            }
+            
+            return imageData;
+        }
+        
+        function applyGamma(imageData, gamma) {
+            const data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = 255 * Math.pow(data[i] / 255, 1 / gamma);
+                data[i + 1] = 255 * Math.pow(data[i + 1] / 255, 1 / gamma);
+                data[i + 2] = 255 * Math.pow(data[i + 2] / 255, 1 / gamma);
+            }
+            
+            return imageData;
+        }
+        
+        function applyHistogramEqualization(imageData) {
+            const data = imageData.data;
+            const histogram = new Array(256).fill(0);
+            
+            // Calculate histogram
+            for (let i = 0; i < data.length; i += 4) {
+                const gray = Math.floor(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+                histogram[gray]++;
+            }
+            
+            // Calculate CDF
+            const cdf = new Array(256);
+            cdf[0] = histogram[0];
+            for (let i = 1; i < 256; i++) {
+                cdf[i] = cdf[i - 1] + histogram[i];
+            }
+            
+            // Normalize
+            const cdfMin = cdf.find(val => val > 0);
+            const total = data.length / 4;
+            const equalized = cdf.map(val => Math.round(((val - cdfMin) / (total - cdfMin)) * 255));
+            
+            // Apply
+            for (let i = 0; i < data.length; i += 4) {
+                const gray = Math.floor(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+                const factor = equalized[gray] / (gray || 1);
+                
+                data[i] = Math.min(255, data[i] * factor);
+                data[i + 1] = Math.min(255, data[i + 1] * factor);
+                data[i + 2] = Math.min(255, data[i + 2] * factor);
+            }
+            
+            return imageData;
+        }
+        
+        function applySharpen(imageData) {
+            const data = imageData.data;
+            const width = imageData.width;
+            const height = imageData.height;
+            const output = new Uint8ClampedArray(data);
+            
+            const kernel = [0, -1, 0, -1, 5, -1, 0, -1, 0];
+            
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    for (let c = 0; c < 3; c++) {
+                        let sum = 0;
+                        for (let j = -1; j <= 1; j++) {
+                            for (let i = -1; i <= 1; i++) {
+                                const idx = ((y + j) * width + (x + i)) * 4 + c;
+                                const kernelIdx = (j + 1) * 3 + (i + 1);
+                                sum += data[idx] * kernel[kernelIdx];
+                            }
+                        }
+                        const idx = (y * width + x) * 4 + c;
+                        output[idx] = Math.min(255, Math.max(0, sum));
+                    }
+                }
+            }
+            
+            imageData.data.set(output);
+            return imageData;
+        }
+        
+        function applyDenoise(imageData) {
+            const data = imageData.data;
+            const width = imageData.width;
+            const height = imageData.height;
+            const output = new Uint8ClampedArray(data);
+            
+            // Median filter for denoising
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    for (let c = 0; c < 3; c++) {
+                        const values = [];
+                        for (let j = -1; j <= 1; j++) {
+                            for (let i = -1; i <= 1; i++) {
+                                const idx = ((y + j) * width + (x + i)) * 4 + c;
+                                values.push(data[idx]);
+                            }
+                        }
+                        values.sort((a, b) => a - b);
+                        const idx = (y * width + x) * 4 + c;
+                        output[idx] = values[4]; // Median value
+                    }
+                }
+            }
+            
+            imageData.data.set(output);
+            return imageData;
+        }
+        
+        // Histogram
+        function calculateHistogram(imageData) {
+            const histogram = new Array(256).fill(0);
+            const data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const gray = Math.floor(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+                histogram[gray]++;
+            }
+            
+            return histogram;
+        }
+        
+        function updateHistogram() {
+            if (!state.image) return;
+            
+            const canvas = document.getElementById('histogram-canvas');
+            const ctx = canvas.getContext('2d');
+            const imageData = state.ctx.getImageData(0, 0, state.canvas.width, state.canvas.height);
+            const histogram = calculateHistogram(imageData);
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Find max value for scaling
+            const max = Math.max(...histogram);
+            
+            // Draw histogram
+            ctx.fillStyle = 'rgba(37, 99, 235, 0.7)';
+            const barWidth = canvas.width / 256;
+            
+            for (let i = 0; i < 256; i++) {
+                const height = (histogram[i] / max) * canvas.height;
+                ctx.fillRect(i * barWidth, canvas.height - height, barWidth, height);
+            }
+        }
+        
+        // History Management
+        function saveToHistory() {
+            // Remove any states after current index
+            state.history = state.history.slice(0, state.historyIndex + 1);
+            
+            // Add current state
+            const imageData = state.ctx.getImageData(0, 0, state.canvas.width, state.canvas.height);
+            state.history.push(imageData);
+            state.historyIndex++;
+            
+            // Limit history size
+            if (state.history.length > 20) {
+                state.history.shift();
+                state.historyIndex--;
+            }
+        }
+        
+        function undo() {
+            if (state.historyIndex > 0) {
+                state.historyIndex--;
+                state.ctx.putImageData(state.history[state.historyIndex], 0, 0);
+                updateHistogram();
+                updateStatus('Undo');
+            }
+        }
+        
+        function redo() {
+            if (state.historyIndex < state.history.length - 1) {
+                state.historyIndex++;
+                state.ctx.putImageData(state.history[state.historyIndex], 0, 0);
+                updateHistogram();
+                updateStatus('Redo');
+            }
+        }
+        
+        function resetImage() {
+            if (!state.originalImage) return;
+            
+            state.ctx.drawImage(state.originalImage, 0, 0);
+            
+            // Reset settings
+            state.settings = {
+                brightness: 0,
+                contrast: 0,
+                saturation: 0,
+                gamma: 1,
+                histogram: false,
+                sharpen: false,
+                denoise: false
+            };
+            
+            // Reset UI
+            document.getElementById('brightness').value = 0;
+            document.getElementById('contrast').value = 0;
+            document.getElementById('saturation').value = 0;
+            document.getElementById('gamma').value = 1;
+            document.getElementById('histogram').checked = false;
+            document.getElementById('sharpen').checked = false;
+            document.getElementById('denoise').checked = false;
+            
+            // Update displays
+            document.getElementById('brightness-value').textContent = '0';
+            document.getElementById('contrast-value').textContent = '0';
+            document.getElementById('saturation-value').textContent = '0';
+            document.getElementById('gamma-value').textContent = '1.0';
+            
+            saveToHistory();
+            updateHistogram();
+            updateStatus('Image reset');
+        }
+        
+        // Zoom and Pan
+        function zoomIn() {
+            state.zoom = Math.min(state.zoom * 1.2, 10);
+            updateZoom();
+        }
+        
+        function zoomOut() {
+            state.zoom = Math.max(state.zoom / 1.2, 0.1);
+            updateZoom();
+        }
+        
+        function fitToScreen() {
+            if (!state.image) return;
+            
+            const container = document.getElementById('canvas-container');
+            const scaleX = container.clientWidth / state.canvas.width;
+            const scaleY = container.clientHeight / state.canvas.height;
+            state.zoom = Math.min(scaleX, scaleY) * 0.9;
+            
+            updateZoom();
+            centerCanvas();
+        }
+        
+        function updateZoom() {
+            const wrapper = document.getElementById('canvas-wrapper');
+            wrapper.style.transform = `scale(${state.zoom}) rotate(${state.rotation}deg)`;
+            document.getElementById('zoom-level').textContent = Math.round(state.zoom * 100) + '%';
+        }
+        
+        function centerCanvas() {
+            const wrapper = document.getElementById('canvas-wrapper');
+            wrapper.style.left = '50%';
+            wrapper.style.top = '50%';
+        }
+        
+        // Rotation and Flip
+        function rotateLeft() {
+            state.rotation -= 90;
+            updateZoom();
+        }
+        
+        function rotateRight() {
+            state.rotation += 90;
+            updateZoom();
+        }
+        
+        function flipHorizontal() {
+            if (!state.image) return;
+            
+            state.ctx.save();
+            state.ctx.scale(-1, 1);
+            state.ctx.drawImage(state.canvas, -state.canvas.width, 0);
+            state.ctx.restore();
+            
+            saveToHistory();
+            updateStatus('Flipped horizontally');
+        }
+        
+        function flipVertical() {
+            if (!state.image) return;
+            
+            state.ctx.save();
+            state.ctx.scale(1, -1);
+            state.ctx.drawImage(state.canvas, 0, -state.canvas.height);
+            state.ctx.restore();
+            
+            saveToHistory();
+            updateStatus('Flipped vertically');
+        }
+        
+        // Mouse Handlers
+        function handleMouseDown(e) {
+            if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
+                // Middle mouse or Shift+Left for panning
+                state.isPanning = true;
+                state.panStart = { x: e.clientX, y: e.clientY };
+                state.canvas.classList.add('grabbing');
+            } else if (state.currentTool) {
+                // Tool usage
+                state.isDrawing = true;
+                const rect = state.canvas.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / state.zoom;
+                const y = (e.clientY - rect.top) / state.zoom;
+                handleToolStart(x, y);
+            }
+        }
+        
+        function handleMouseMove(e) {
+            const rect = state.canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / state.zoom;
+            const y = (e.clientY - rect.top) / state.zoom;
+            
+            // Update cursor info
+            if (state.image) {
+                const pixel = state.ctx.getImageData(x, y, 1, 1).data;
+                document.getElementById('cursor-info').textContent = 
+                    `X: ${Math.round(x)} Y: ${Math.round(y)} | RGB(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`;
+            }
+            
+            if (state.isPanning) {
+                const dx = e.clientX - state.panStart.x;
+                const dy = e.clientY - state.panStart.y;
+                
+                const wrapper = document.getElementById('canvas-wrapper');
+                const currentTransform = wrapper.style.transform;
+                // Update pan position while maintaining zoom
+                // This is simplified - full implementation would track position separately
+            } else if (state.isDrawing && state.currentTool) {
+                handleToolMove(x, y);
+            }
+        }
+        
+        function handleMouseUp(e) {
+            if (state.isPanning) {
+                state.isPanning = false;
+                state.canvas.classList.remove('grabbing');
+            } else if (state.isDrawing) {
+                state.isDrawing = false;
+                const rect = state.canvas.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / state.zoom;
+                const y = (e.clientY - rect.top) / state.zoom;
+                handleToolEnd(x, y);
+            }
+        }
+        
+        function handleWheel(e) {
+            e.preventDefault();
+            
+            if (e.ctrlKey || e.metaKey) {
+                // Zoom with Ctrl+Wheel
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                state.zoom = Math.min(Math.max(state.zoom * delta, 0.1), 10);
+                updateZoom();
+            }
+        }
+        
+        // Tool Handlers
+        function setTool(tool) {
+            state.currentTool = tool;
+            
+            // Update UI
+            document.querySelectorAll('.quick-action-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Update cursor
+            switch(tool) {
+                case 'pen':
+                case 'marker':
+                    state.canvas.style.cursor = 'crosshair';
+                    break;
+                case 'text':
+                    state.canvas.style.cursor = 'text';
+                    break;
+                default:
+                    state.canvas.style.cursor = 'crosshair';
+            }
+            
+            updateStatus(`Selected tool: ${tool}`);
+        }
+        
+        function handleToolStart(x, y) {
+            // Implementation depends on current tool
+            console.log('Tool start:', state.currentTool, x, y);
+        }
+        
+        function handleToolMove(x, y) {
+            // Implementation depends on current tool
+            console.log('Tool move:', state.currentTool, x, y);
+        }
+        
+        function handleToolEnd(x, y) {
+            // Implementation depends on current tool
+            console.log('Tool end:', state.currentTool, x, y);
+        }
+        
+        // Measurement Functions
+        function startMeasurement(type) {
+            state.currentTool = 'measure-' + type;
+            updateStatus(`Measuring ${type}. Click on the image.`);
+        }
+        
+        function clearMeasurements() {
+            state.measurements = [];
+            state.overlayCtx.clearRect(0, 0, state.overlayCanvas.width, state.overlayCanvas.height);
+            updateStatus('Measurements cleared');
+        }
+        
+        // UI Functions
+        function switchTab(tab) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            
+            // Remove active from all tab buttons
+            document.querySelectorAll('.sidebar-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(`${tab}-tab`).classList.add('active');
+            
+            // Set active tab button
+            event.target.classList.add('active');
+        }
+        
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        }
+        
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        function toggleComparison() {
+            // TODO: Implement before/after comparison view
+            updateStatus('Comparison view toggled');
+        }
+        
+        function toggleGrid() {
+            // TODO: Implement grid overlay
+            updateStatus('Grid toggled');
+        }
+        
+        function colorPicker() {
+            state.currentTool = 'colorPicker';
+            state.canvas.style.cursor = 'crosshair';
+            updateStatus('Color picker activated');
+        }
+        
+        // Progress and Status
+        function showProgress(text, subtext) {
+            document.getElementById('progress-text').textContent = text;
+            document.getElementById('progress-subtext').textContent = subtext || '';
+            document.getElementById('progress-overlay').classList.add('active');
+        }
+        
+        function hideProgress() {
+            document.getElementById('progress-overlay').classList.remove('active');
+        }
+        
+        function updateStatus(message) {
+            document.getElementById('status-text').textContent = message;
+        }
+        
+        // Modal Functions
+        function showShortcuts() {
+            document.getElementById('shortcuts-modal').classList.add('show');
+        }
+        
+        function showHelp() {
+            // TODO: Implement help modal
+            alert('ArchaeoVision Pro v1.0\n\nProfessional archaeological image enhancement suite\n\nFor support: archaeovision@example.com');
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+        
+        // Save/Load Functions
+        function loadImage() {
+            document.getElementById('file-input').click();
+        }
+        
+        function saveImage() {
+            if (!state.image) return;
+            
+            const link = document.createElement('a');
+            link.download = `enhanced_${Date.now()}.png`;
+            link.href = state.canvas.toDataURL('image/png');
+            link.click();
+            
+            updateStatus('Image saved');
+        }
+        
+        function exportImage() {
+            if (!state.image) return;
+            
+            // TODO: Implement export dialog with options
+            saveImage();
+        }
+        
+        function loadSavedSettings() {
+            const saved = localStorage.getItem('archaeovision_settings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                state.settings = settings;
+                // Apply to UI
+                Object.keys(settings).forEach(key => {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        if (element.type === 'checkbox') {
+                            element.checked = settings[key];
+                        } else {
+                            element.value = settings[key];
+                        }
+                    }
+                });
+            }
+        }
+        
+        function saveSettings() {
+            localStorage.setItem('archaeovision_settings', JSON.stringify(state.settings));
+            updateStatus('Settings saved');
+        }
+        
+        // Preset Selection
+        function selectPreset(preset) {
+            // Update UI
+            document.querySelectorAll('.preset-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            // Apply preset
+            applyPreset(preset);
+        }
+        
+        // Export measurements
+        function exportMeasurements() {
+            if (state.measurements.length === 0) {
+                alert('No measurements to export');
+                return;
+            }
+            
+            const csv = 'Type,Value,Unit\n' + 
+                state.measurements.map(m => `${m.type},${m.value},${m.unit}`).join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `measurements_${Date.now()}.csv`;
+            link.click();
+            
+            updateStatus('Measurements exported');
+        }
+        
+        // Calibration
+        function setCalibration() {
+            const value = document.getElementById('calibration-value').value;
+            if (value && !isNaN(value)) {
+                state.pixelsPerMm = parseFloat(value);
+                updateStatus(`Calibration set: ${value} pixels/mm`);
+            }
+        }
+        
+        // Close modals on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('show');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
