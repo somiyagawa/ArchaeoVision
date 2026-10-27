@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArchaeoVision Pro - Archaeological Image Enhancement Suite</title>
+    <meta name="description" content="Archaeological image enhancement in the browser: DStretch-style decorrelation stretch, CLAHE, pigment tracing and calibrated measurement. Images never leave your device.">
+    <meta name="theme-color" content="#1e293b">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="ArchaeoVision">
     <style>
         * {
             margin: 0;
@@ -118,17 +125,18 @@
         
         .sidebar-tab {
             flex: 1;
-            padding: 12px;
+            padding: 10px 4px;
             background: transparent;
             border: none;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.72rem;
             color: var(--secondary);
             transition: all 0.3s;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 2px;
         }
         
         .sidebar-tab.active {
@@ -221,7 +229,6 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            transition: transform 0.3s;
         }
         
         .main-canvas {
@@ -1007,6 +1014,245 @@
             font-family: monospace;
             font-size: 0.85rem;
         }
+
+        /* Split view, measurements, tracing */
+        .compare-divider {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            transform: translateX(-50%);
+            background: white;
+            pointer-events: none;
+        }
+        
+        .measure-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 0.82rem;
+            color: var(--dark);
+        }
+        
+        .measure-del {
+            border: none;
+            background: var(--light);
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            flex-shrink: 0;
+            cursor: pointer;
+            color: var(--secondary);
+        }
+        
+        .measure-del:hover {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .trace-samples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        
+        .trace-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px var(--border);
+            cursor: pointer;
+        }
+        
+        .trace-swatch:hover {
+            box-shadow: 0 0 0 2px var(--danger);
+        }
+        
+        /* DStretch */
+        .ds-group-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--secondary);
+            margin: 10px 0 6px;
+        }
+
+        .ds-space-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+
+        .ds-space-btn {
+            padding: 8px 0;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            color: var(--dark);
+            transition: all 0.2s;
+        }
+
+        .ds-space-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--light);
+        }
+
+        .ds-space-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .ds-desc {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: var(--secondary);
+            min-height: 1.2em;
+        }
+
+        .ds-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .ds-actions .tool-btn {
+            flex-direction: column;
+            justify-content: center;
+            gap: 2px;
+            padding: 8px 4px;
+            font-size: 0.75rem;
+        }
+
+        .ds-note {
+            font-size: 0.78rem;
+            color: var(--secondary);
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .ds-select-row {
+            margin-bottom: 15px;
+        }
+
+        .ds-select-row .slider-label {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .ds-select-row .input-field {
+            width: 100%;
+        }
+
+        .btn-sm {
+            padding: 7px 12px;
+            font-size: 0.82rem;
+        }
+
+        .modal-content.modal-wide {
+            max-width: 1000px;
+        }
+
+        .ds-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .ds-thumb {
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--light);
+            padding: 6px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            color: var(--dark);
+        }
+
+        .ds-thumb:hover,
+        .ds-thumb.active {
+            border-color: var(--primary);
+        }
+
+        .ds-thumb canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            background: var(--border);
+        }
+
+        .ds-matrix-block {
+            margin-bottom: 16px;
+        }
+
+        .ds-matrix-title {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+
+        .ds-matrix {
+            border-collapse: collapse;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.82rem;
+        }
+
+        .ds-matrix th,
+        .ds-matrix td {
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+            text-align: right;
+        }
+
+        .ds-matrix th {
+            background: var(--light);
+            color: var(--secondary);
+            font-weight: 600;
+        }
+
+        .ds-matrix-meta {
+            color: var(--secondary);
+            font-size: 0.85rem;
+            margin-bottom: 14px;
+        }
+
+        .ds-matrix-h {
+            font-size: 1rem;
+            color: var(--dark);
+            margin: 20px 0 4px;
+        }
+
+        .ds-matrix-edit {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            gap: 6px;
+            margin: 8px 0 12px;
+        }
+
+        .ds-matrix-edit input {
+            padding: 6px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
     </style>
 </head>
 <body>
@@ -1031,6 +1277,14 @@
                 <button class="sidebar-tab active" onclick="switchTab('enhance')">
                     <span>🎨</span>
                     <span>Enhance</span>
+                </button>
+                <button class="sidebar-tab" onclick="switchTab('dstretch')">
+                    <span>🎯</span>
+                    <span>DStretch</span>
+                </button>
+                <button class="sidebar-tab" onclick="switchTab('trace')">
+                    <span>🖌️</span>
+                    <span>Trace</span>
                 </button>
                 <button class="sidebar-tab" onclick="switchTab('measure')">
                     <span>📏</span>
@@ -1178,6 +1432,11 @@
                             <input type="checkbox" class="checkbox" id="denoise">
                             <label for="denoise">Noise Reduction</label>
                         </div>
+                        
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="checkbox" id="clahe">
+                            <label for="clahe">Local Contrast (CLAHE)</label>
+                        </div>
                     </div>
                     
                     <div class="control-section">
@@ -1192,6 +1451,434 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- DStretch Tab -->
+                <div class="tab-panel" id="dstretch-tab">
+                    <div class="info-card">
+                        <div class="info-card-title">
+                            <span>🎯</span>
+                            <span>Decorrelation Stretch</span>
+                        </div>
+                        <div class="info-card-content">
+                            Choose a colorspace to reveal faint pigments. Each one is tuned for a pigment type; raise Scale for a stronger stretch. Processing always starts from the original image.
+                        </div>
+                    </div>
+
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>🌈</span>
+                                <span>Colorspace</span>
+                            </div>
+                            <span class="control-badge" id="ds-current">—</span>
+                        </div>
+                        <div id="ds-space-grid"></div>
+                        <div class="ds-desc" id="ds-desc">Select a colorspace to start.</div>
+                    </div>
+
+                    <div class="control-section">
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Scale (stretch amount)</span>
+                                <span class="slider-value" id="ds-scale-value">15</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-ds="scale" min="1" max="100" step="1" value="15">
+                            </div>
+                        </div>
+                        <div class="ds-actions">
+                            <button class="tool-btn" id="ds-original-btn" title="Hold to show the original image">
+                                <span>👁️</span>
+                                <span>Original</span>
+                            </button>
+                            <button class="tool-btn" onclick="dsOpenGallery()" title="Preview every colorspace">
+                                <span>🖼️</span>
+                                <span>Gallery</span>
+                            </button>
+                            <button class="tool-btn" onclick="dsShowMatrix()" title="Statistics and matrix editor">
+                                <span>🧮</span>
+                                <span>Matrix</span>
+                            </button>
+                            <button class="tool-btn" onclick="dsSave()" title="Save with colorspace and scale in the file name">
+                                <span>💾</span>
+                                <span>Save</span>
+                            </button>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="checkbox" id="ds-live" data-ds="live" checked>
+                            <label for="ds-live">Live preview</label>
+                        </div>
+                    </div>
+
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>⬚</span>
+                                <span>Statistics Region</span>
+                            </div>
+                        </div>
+                        <div class="ds-note" id="ds-roi-info">No region — statistics use the whole image.</div>
+                        <div class="btn-group" style="margin-top: 0; margin-bottom: 10px;">
+                            <button class="btn btn-outline btn-sm" onclick="dsStartRoi()">Select Region</button>
+                            <button class="btn btn-secondary btn-sm" onclick="dsClearRoi()">Clear</button>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="checkbox" id="ds-use-roi" data-ds="useRoi">
+                            <label for="ds-use-roi">Use region for statistics</label>
+                        </div>
+                    </div>
+
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>🧹</span>
+                                <span>Pre-processing</span>
+                            </div>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="checkbox" id="ds-balance" data-ds="balance">
+                            <label for="ds-balance">Color balance (gray world)</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="checkbox" id="ds-flatten" data-ds="flatten">
+                            <label for="ds-flatten">Flatten uneven lighting</label>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Flatten radius</span>
+                                <span class="slider-value" id="ds-flattenRadius-value">100px</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-ds="flattenRadius" data-unit="px" min="10" max="1000" step="10" value="100">
+                            </div>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Flatten strength</span>
+                                <span class="slider-value" id="ds-flattenStrength-value">100%</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-ds="flattenStrength" data-unit="%" min="0" max="100" step="1" value="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>🎚️</span>
+                                <span>Color Bias</span>
+                            </div>
+                        </div>
+                        <div class="ds-note" id="ds-bias-note"></div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Target hue (0 red · 90 yellow · 180 green · 270 blue)</span>
+                                <span class="slider-value" id="ds-angle-value">0°</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-ds="angle" data-ds-bias data-unit="°" min="0" max="359" step="1" value="0">
+                            </div>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Toward target</span>
+                                <span class="slider-value" id="ds-gPos-value">1.00</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-ds="gPos" data-ds-bias min="0" max="4" step="0.05" value="1">
+                            </div>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Away from target</span>
+                                <span class="slider-value" id="ds-gNeg-value">1.00</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-ds="gNeg" data-ds-bias min="0" max="4" step="0.05" value="1">
+                            </div>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Across target</span>
+                                <span class="slider-value" id="ds-gPerp-value">1.00</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-ds="gPerp" data-ds-bias min="0" max="4" step="0.05" value="1">
+                            </div>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Lightness stretch</span>
+                                <span class="slider-value" id="ds-lumaMix-value">1.00</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-ds="lumaMix" data-ds-bias min="0" max="1" step="0.05" value="1">
+                            </div>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Lightness gain</span>
+                                <span class="slider-value" id="ds-lumaGain-value">1.00</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-ds="lumaGain" data-ds-bias min="0" max="3" step="0.05" value="1">
+                            </div>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Neutral background</span>
+                                <span class="slider-value" id="ds-neutral-value">0.00</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-ds="neutral" data-ds-bias min="0" max="1" step="0.05" value="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>✨</span>
+                                <span>Post-processing</span>
+                            </div>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Hue shift</span>
+                                <span class="slider-value" id="ds-hue-value">0°</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-ds="hue" data-unit="°" min="-180" max="180" step="1" value="0">
+                            </div>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Saturation</span>
+                                <span class="slider-value" id="ds-sat-value">0%</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-ds="sat" data-unit="%" min="-100" max="200" step="1" value="0">
+                            </div>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Lightness</span>
+                                <span class="slider-value" id="ds-light-value">0</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-ds="light" min="-50" max="50" step="1" value="0">
+                            </div>
+                        </div>
+                        <div class="ds-select-row">
+                            <span class="slider-label">Auto contrast</span>
+                            <select class="input-field" data-ds="autoContrast">
+                                <option value="off">Off</option>
+                                <option value="linked">Linked channels (keeps colors)</option>
+                                <option value="per-channel">Per channel (also balances color)</option>
+                            </select>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Auto contrast clip</span>
+                                <span class="slider-value" id="ds-clip-value">0.5%</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-ds="clip" data-unit="%" min="0" max="5" step="0.1" value="0.5">
+                            </div>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="checkbox" id="ds-histeq" data-ds="histEq">
+                            <label for="ds-histeq">Equalize lightness</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="checkbox" id="ds-clahe" data-ds="clahe">
+                            <label for="ds-clahe">Local contrast (CLAHE)</label>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">CLAHE clip limit</span>
+                                <span class="slider-value" id="ds-claheClip-value">2.5</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-ds="claheClip" min="1" max="10" step="0.1" value="2.5">
+                            </div>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">CLAHE tiles</span>
+                                <span class="slider-value" id="ds-claheTiles-value">8</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-ds="claheTiles" min="2" max="24" step="1" value="8">
+                            </div>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Detail boost (engravings)</span>
+                                <span class="slider-value" id="ds-detail-value">0%</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-ds="detail" data-unit="%" min="0" max="300" step="5" value="0">
+                            </div>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Detail radius</span>
+                                <span class="slider-value" id="ds-detailRadius-value">8px</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-ds="detailRadius" data-unit="px" min="1" max="60" step="1" value="8">
+                            </div>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="checkbox" id="ds-invert" data-ds="invert">
+                            <label for="ds-invert">Invert</label>
+                        </div>
+                        <div class="ds-select-row">
+                            <span class="slider-label">Channel swap</span>
+                            <select class="input-field" data-ds="swap">
+                                <option value="rgb">RGB (none)</option>
+                                <option value="rbg">RBG</option>
+                                <option value="grb">GRB</option>
+                                <option value="gbr">GBR</option>
+                                <option value="brg">BRG</option>
+                                <option value="bgr">BGR</option>
+                            </select>
+                        </div>
+                        <div class="ds-select-row">
+                            <span class="slider-label">Channel view</span>
+                            <select class="input-field" data-ds="channel">
+                                <option value="all">All channels (color)</option>
+                                <option value="0">Channel 1 (lightness) only</option>
+                                <option value="1">Channel 2 only</option>
+                                <option value="2">Channel 3 only</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="dsRenderFull()">Apply</button>
+                        <button class="btn btn-secondary" onclick="dsResetAll()">Reset DStretch</button>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-outline btn-sm" onclick="dsExportSettings()">Export settings</button>
+                        <button class="btn btn-outline btn-sm" onclick="document.getElementById('ds-import-input').click()">Import settings</button>
+                        <input type="file" id="ds-import-input" accept=".json,application/json" style="display: none;">
+                    </div>
+                </div>
+
+                <!-- Trace Tab -->
+                <div class="tab-panel" id="trace-tab">
+                    <div class="info-card">
+                        <div class="info-card-title">
+                            <span>🖌️</span>
+                            <span>Pigment Finder</span>
+                        </div>
+                        <div class="info-card-content">
+                            Click pigment on the image (ideally after DStretch) to select every pixel of a similar color, then export a digital tracing.
+                        </div>
+                    </div>
+                    
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>🎯</span>
+                                <span>Pigment Samples</span>
+                            </div>
+                        </div>
+                        <div class="btn-group" style="margin-top: 0; margin-bottom: 12px;">
+                            <button class="btn btn-primary btn-sm" onclick="traceStartPick()">Pick Colors</button>
+                            <button class="btn btn-secondary btn-sm" onclick="traceClearSamples()">Clear</button>
+                        </div>
+                        <div class="trace-samples" id="trace-samples"></div>
+                    </div>
+                    
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>🎚️</span>
+                                <span>Selection</span>
+                            </div>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Tolerance (ΔE)</span>
+                                <span class="slider-value" id="trace-tolerance-value">12</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-trace="tolerance" min="1" max="60" step="1" value="12">
+                            </div>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Lightness weight</span>
+                                <span class="slider-value" id="trace-lWeight-value">0.30</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-trace="lWeight" min="0" max="1" step="0.05" value="0.3">
+                            </div>
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Remove specks smaller than</span>
+                                <span class="slider-value" id="trace-minArea-value">20px</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-trace="minArea" data-unit="px" min="0" max="500" step="5" value="20">
+                            </div>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="checkbox" id="trace-smooth" data-trace="smooth" checked>
+                            <label for="trace-smooth">Smooth edges</label>
+                        </div>
+                        <div class="ds-note" id="trace-stats">Pick pigment colors to start.</div>
+                    </div>
+                    
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>👁️</span>
+                                <span>Display</span>
+                            </div>
+                        </div>
+                        <div class="ds-select-row">
+                            <span class="slider-label">Show</span>
+                            <select class="input-field" data-trace="mode">
+                                <option value="highlight">Highlight on image</option>
+                                <option value="tracing">Tracing preview (black on white)</option>
+                                <option value="off">Off</option>
+                            </select>
+                        </div>
+                        <div class="ds-select-row">
+                            <span class="slider-label">Highlight color</span>
+                            <input type="color" class="input-field" data-trace="color" value="#ff00ff">
+                        </div>
+                        <div class="slider-control">
+                            <div class="slider-header">
+                                <span class="slider-label">Highlight opacity</span>
+                                <span class="slider-value" id="trace-opacity-value">0.65</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" data-trace="opacity" min="0.1" max="1" step="0.05" value="0.65">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>📤</span>
+                                <span>Export Tracing</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-success btn-full btn-sm" onclick="traceExport('tracing')">Tracing PNG (black on white)</button>
+                        <div class="btn-group">
+                            <button class="btn btn-outline btn-sm" onclick="traceExport('layer')">Transparent layer</button>
+                            <button class="btn btn-outline btn-sm" onclick="traceExport('composite')">Image + overlay</button>
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- Measurement Tab -->
                 <div class="tab-panel" id="measure-tab">
@@ -1201,29 +1888,8 @@
                             <span>Measurement Tools</span>
                         </div>
                         <div class="info-card-content">
-                            Click points on the image to measure distances and areas. Calibrate with a known reference for accurate real-world measurements.
+                            Calibrate against a scale bar in the photo, then measure distances, areas and angles in millimetres. Press Esc to cancel a tool.
                         </div>
-                    </div>
-                    
-                    <div class="btn-group">
-                        <button class="btn btn-primary btn-full" onclick="startMeasurement('line')">
-                            <span>📐</span>
-                            <span>Measure Distance</span>
-                        </button>
-                    </div>
-                    
-                    <div class="btn-group">
-                        <button class="btn btn-primary btn-full" onclick="startMeasurement('area')">
-                            <span>📦</span>
-                            <span>Measure Area</span>
-                        </button>
-                    </div>
-                    
-                    <div class="btn-group">
-                        <button class="btn btn-warning btn-full" onclick="startMeasurement('angle')">
-                            <span>📐</span>
-                            <span>Measure Angle</span>
-                        </button>
                     </div>
                     
                     <div class="control-section">
@@ -1234,8 +1900,37 @@
                             </div>
                         </div>
                         <div class="input-group">
-                            <input type="number" class="input-field" id="calibration-value" placeholder="Known distance (mm)">
-                            <button class="btn btn-primary" onclick="setCalibration()">Set</button>
+                            <input type="number" class="input-field" id="calibration-value" placeholder="Scale bar length (mm)" min="0" step="any">
+                            <button class="btn btn-primary" onclick="setCalibration()">Draw</button>
+                        </div>
+                        <div class="ds-note" id="calibration-status">Not calibrated — values are in pixels.</div>
+                        <button class="btn btn-outline btn-sm" onclick="resetCalibration()">Clear calibration</button>
+                    </div>
+                    
+                    <div class="control-section">
+                        <div class="control-header">
+                            <div class="control-title">
+                                <span>📐</span>
+                                <span>Tools</span>
+                            </div>
+                        </div>
+                        <div class="quick-actions">
+                            <button class="quick-action-btn" onclick="startMeasurement('line')" title="Drag to measure a distance">
+                                <div class="quick-action-icon">📐</div>
+                                <div>Distance</div>
+                            </button>
+                            <button class="quick-action-btn" onclick="startMeasurement('area')" title="Click outline points; double-click or Enter to close">
+                                <div class="quick-action-icon">📦</div>
+                                <div>Area</div>
+                            </button>
+                            <button class="quick-action-btn" onclick="startMeasurement('angle')" title="Click start, vertex, end">
+                                <div class="quick-action-icon">∠</div>
+                                <div>Angle</div>
+                            </button>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="checkbox" id="grid-toggle" onchange="if (this.checked !== state.grid) toggleGrid(); this.checked = state.grid">
+                            <label for="grid-toggle">Scale grid (mm when calibrated)</label>
                         </div>
                     </div>
                     
@@ -1253,7 +1948,7 @@
                     
                     <div class="btn-group">
                         <button class="btn btn-secondary" onclick="clearMeasurements()">Clear All</button>
-                        <button class="btn btn-success" onclick="exportMeasurements()">Export</button>
+                        <button class="btn btn-success" onclick="exportMeasurements()">Export CSV</button>
                     </div>
                 </div>
                 
@@ -1431,7 +2126,11 @@
                         <span>👁️</span>
                         <span>Compare</span>
                     </button>
-                    <button class="tool-btn" onclick="toggleGrid()" data-tooltip="Grid">
+                    <button class="tool-btn" id="split-btn" onclick="toggleSplitView()" data-tooltip="Split view (S)">
+                        <span>◧</span>
+                        <span>Split</span>
+                    </button>
+                    <button class="tool-btn" id="grid-btn" onclick="toggleGrid()" data-tooltip="Grid">
                         <span>#</span>
                     </button>
                     <button class="tool-btn" onclick="colorPicker()" data-tooltip="Color Picker">
@@ -1452,7 +2151,10 @@
                         <div style="font-weight: 600; margin-bottom: 5px;">Drop your image here</div>
                         <div style="color: var(--secondary); font-size: 0.9rem;">or click to browse</div>
                         <div style="margin-top: 15px; font-size: 0.8rem; color: var(--secondary);">
-                            Supports: JPG, PNG, TIFF, RAW
+                            Supports: JPG, PNG, WebP
+                        </div>
+                        <div style="margin-top: 6px; font-size: 0.75rem; color: var(--secondary);">
+                            🔒 Processed locally in your browser — images are never uploaded
                         </div>
                     </div>
                     <input type="file" id="file-input" accept="image/*" style="display: none;">
@@ -1461,6 +2163,9 @@
                 <!-- Canvas Wrapper -->
                 <div class="canvas-wrapper hidden" id="canvas-wrapper">
                     <canvas id="main-canvas" class="main-canvas"></canvas>
+                    <canvas id="trace-canvas" class="overlay-canvas hidden"></canvas>
+                    <canvas id="compare-canvas" class="overlay-canvas hidden"></canvas>
+                    <div id="compare-divider" class="compare-divider hidden"></div>
                     <canvas id="overlay-canvas" class="overlay-canvas"></canvas>
                     <div id="annotation-layer" class="annotation-layer"></div>
                 </div>
@@ -1491,6 +2196,29 @@
         </div>
     </div>
     
+    <!-- DStretch Gallery Modal -->
+    <div class="modal" id="ds-gallery-modal">
+        <div class="modal-content modal-wide">
+            <div class="modal-header">
+                <h2 class="modal-title">🖼️ Colorspace Gallery</h2>
+                <button class="modal-close" onclick="closeModal('ds-gallery-modal')">✕</button>
+            </div>
+            <p class="ds-matrix-meta">Every colorspace at the current scale and settings. Click one to apply it.</p>
+            <div class="ds-gallery" id="ds-gallery"></div>
+        </div>
+    </div>
+
+    <!-- DStretch Matrix Modal -->
+    <div class="modal" id="ds-matrix-modal">
+        <div class="modal-content modal-wide">
+            <div class="modal-header">
+                <h2 class="modal-title">🧮 DStretch Matrix</h2>
+                <button class="modal-close" onclick="closeModal('ds-matrix-modal')">✕</button>
+            </div>
+            <div id="ds-matrix-body"></div>
+        </div>
+    </div>
+
     <!-- Shortcuts Modal -->
     <div class="modal" id="shortcuts-modal">
         <div class="modal-content">
@@ -1544,6 +2272,26 @@
                     <span class="shortcut-key">I</span>
                 </div>
                 <div class="shortcut-item">
+                    <span>Split View</span>
+                    <span class="shortcut-key">S</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Pan</span>
+                    <span class="shortcut-key">Drag / Space + Drag</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Zoom at Cursor</span>
+                    <span class="shortcut-key">Wheel / Pinch</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Close Area Measurement</span>
+                    <span class="shortcut-key">Enter / Double-click</span>
+                </div>
+                <div class="shortcut-item">
+                    <span>Cancel Tool</span>
+                    <span class="shortcut-key">Esc</span>
+                </div>
+                <div class="shortcut-item">
                     <span>Fullscreen</span>
                     <span class="shortcut-key">F11</span>
                 </div>
@@ -1580,6 +2328,16 @@
             },
             currentPreset: null,
             pixelsPerMm: 1,
+            fileName: null,
+            compareSnapshot: null,
+            ds: null,
+            trace: null,
+            calibrated: false,
+            measure: { draft: null, hover: null, counter: 0 },
+            pan: { x: 0, y: 0 },
+            split: { on: false, pos: 0.5, dragging: false },
+            grid: false,
+            spaceHeld: false,
             isPanning: false,
             panStart: { x: 0, y: 0 },
             canvasPosition: { x: 0, y: 0 }
@@ -1589,6 +2347,9 @@
         window.addEventListener('DOMContentLoaded', () => {
             initializeApp();
             setupEventListeners();
+            dsInit();
+            traceInit();
+            renderMeasurementList();
             loadSavedSettings();
             setupKeyboardShortcuts();
             updateHistogram();
@@ -1635,7 +2396,12 @@
             state.canvas.addEventListener('mousedown', handleMouseDown);
             state.canvas.addEventListener('mousemove', handleMouseMove);
             state.canvas.addEventListener('mouseup', handleMouseUp);
-            state.canvas.addEventListener('wheel', handleWheel);
+            document.getElementById('canvas-container').addEventListener('wheel', handleWheel, { passive: false });
+            state.canvas.addEventListener('dblclick', measureCloseArea);
+            window.addEventListener('mouseup', (e) => {
+                // Finish pans and divider drags that end outside the canvas
+                if (state.isPanning || state.split.dragging) handleMouseUp(e);
+            });
             state.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
             
             // Sliders
@@ -1649,10 +2415,14 @@
             document.getElementById('histogram').addEventListener('change', applyFilters);
             document.getElementById('sharpen').addEventListener('change', applyFilters);
             document.getElementById('denoise').addEventListener('change', applyFilters);
+            document.getElementById('clahe').addEventListener('change', applyFilters);
         }
         
         function setupKeyboardShortcuts() {
             document.addEventListener('keydown', (e) => {
+                // Single-key shortcuts are disabled while typing in a field
+                const typing = e.target.matches && e.target.matches('input[type=number], input[type=text], textarea, select');
+                
                 // Ctrl/Cmd + O: Open
                 if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
                     e.preventDefault();
@@ -1702,30 +2472,45 @@
                 }
                 
                 // C: Toggle Comparison
-                if (e.key === 'c' && !e.ctrlKey && !e.metaKey) {
+                if (e.key === 'c' && !e.ctrlKey && !e.metaKey && !typing) {
                     toggleComparison();
                 }
                 
                 // G: Toggle Grid
-                if (e.key === 'g' && !e.ctrlKey && !e.metaKey) {
+                if (e.key === 'g' && !e.ctrlKey && !e.metaKey && !typing) {
                     toggleGrid();
                 }
                 
                 // I: Color Picker
-                if (e.key === 'i' && !e.ctrlKey && !e.metaKey) {
+                if (e.key === 'i' && !e.ctrlKey && !e.metaKey && !typing) {
                     colorPicker();
                 }
                 
-                // Space: Pan
-                if (e.key === ' ') {
+                // S: Split view
+                if (e.key === 's' && !e.ctrlKey && !e.metaKey && !typing) {
+                    toggleSplitView();
+                }
+                
+                // Esc: cancel the active tool; Enter: close an area measurement
+                if (e.key === 'Escape' && state.currentTool) {
+                    cancelTool();
+                }
+                if (e.key === 'Enter' && !typing) {
+                    measureCloseArea();
+                }
+                
+                // Space: hold to pan with any tool
+                if (e.key === ' ' && !typing && !e.target.matches('input, textarea')) {
                     e.preventDefault();
+                    state.spaceHeld = true;
                     state.canvas.style.cursor = 'grab';
                 }
             });
             
             document.addEventListener('keyup', (e) => {
                 if (e.key === ' ') {
-                    state.canvas.style.cursor = 'crosshair';
+                    state.spaceHeld = false;
+                    state.canvas.style.cursor = defaultCursor();
                 }
             });
         }
@@ -1735,6 +2520,7 @@
             if (!file || !file.type.startsWith('image/')) return;
             
             showProgress('Loading image...', 'Processing ' + file.name);
+            state.fileName = file.name;
             
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -1761,6 +2547,14 @@
             
             // Draw image
             state.ctx.drawImage(img, 0, 0);
+            
+            // Drop DStretch results, tracing caches, measurements and split view from the previous image
+            dsForgetImage();
+            traceForgetImage();
+            state.measurements = [];
+            state.measure.draft = null;
+            renderMeasurementList();
+            if (state.split.on) toggleSplitView();
             
             // Hide welcome screen
             document.getElementById('welcome-screen').classList.add('hidden');
@@ -1819,6 +2613,14 @@
         function applyPreset(preset) {
             if (!state.image) return;
             
+            // DStretch presets run through the DStretch engine from the original image
+            const dsPresetMap = { 'dstretch': 'YDS', 'dstretch-lds': 'LDS', 'dstretch-yre': 'YRE', 'egyptian-blue': 'LBL', 'false-color': 'RGB' };
+            if (dsPresetMap[preset]) {
+                if (preset === 'false-color') state.ds.swap = 'brg';
+                dsSelectSpace(dsPresetMap[preset]);
+                return;
+            }
+            
             showProgress('Applying preset...', preset.toUpperCase());
             
             setTimeout(() => {
@@ -1857,34 +2659,8 @@
         
         // Core enhancement algorithms
         function applyDStretch(imageData) {
-            const data = imageData.data;
-            
-            // Calculate statistics
-            let sumR = 0, sumG = 0, sumB = 0;
-            const pixels = data.length / 4;
-            
-            for (let i = 0; i < data.length; i += 4) {
-                sumR += data[i];
-                sumG += data[i + 1];
-                sumB += data[i + 2];
-            }
-            
-            const meanR = sumR / pixels;
-            const meanG = sumG / pixels;
-            const meanB = sumB / pixels;
-            
-            // Apply decorrelation
-            for (let i = 0; i < data.length; i += 4) {
-                const r = data[i] - meanR;
-                const g = data[i + 1] - meanG;
-                const b = data[i + 2] - meanB;
-                
-                // Decorrelation matrix transformation
-                data[i] = Math.min(255, Math.max(0, meanR + r * 1.5 - g * 0.3 - b * 0.2));
-                data[i + 1] = Math.min(255, Math.max(0, meanG - r * 0.3 + g * 1.5 - b * 0.3));
-                data[i + 2] = Math.min(255, Math.max(0, meanB - r * 0.2 - g * 0.3 + b * 1.5));
-            }
-            
+            const res = dsProcess(imageData.data, imageData.width, imageData.height, dsDefaultConfig('YDS'));
+            imageData.data.set(res.data);
             return imageData;
         }
         
@@ -2033,8 +2809,13 @@
         function applyFilters() {
             if (!state.image) return;
             
-            // Start with original image
-            state.ctx.drawImage(state.originalImage, 0, 0);
+            // Start with the DStretch result if there is one, otherwise the original image
+            state.compareSnapshot = null;
+            if (state.ds.result) {
+                state.ctx.putImageData(state.ds.result, 0, 0);
+            } else {
+                state.ctx.drawImage(state.originalImage, 0, 0);
+            }
             
             // Get image data
             let imageData = state.ctx.getImageData(0, 0, state.canvas.width, state.canvas.height);
@@ -2069,9 +2850,28 @@
                 imageData = applyDenoise(imageData);
             }
             
+            // Apply local contrast (CLAHE)
+            if (document.getElementById('clahe').checked) {
+                imageData = applyCLAHE(imageData);
+            }
+            
             // Update canvas
             state.ctx.putImageData(imageData, 0, 0);
             updateHistogram();
+            traceInvalidate();
+        }
+        
+        function applyCLAHE(imageData) {
+            const { width: w, height: h, data } = imageData, N = w * h;
+            const c0 = new Float32Array(N), c1 = new Float32Array(N), c2 = new Float32Array(N);
+            for (let i = 0, j = 0; i < N; i++, j += 4) {
+                c0[i] = data[j] / 255; c1[i] = data[j + 1] / 255; c2[i] = data[j + 2] / 255;
+            }
+            dsClahe(c0, c1, c2, w, h, 2.5, 8);
+            for (let i = 0, j = 0; i < N; i++, j += 4) {
+                data[j] = c0[i] * 255; data[j + 1] = c1[i] * 255; data[j + 2] = c2[i] * 255;
+            }
+            return imageData;
         }
         
         function applySaturation(imageData, saturation) {
@@ -2238,6 +3038,7 @@
             const imageData = state.ctx.getImageData(0, 0, state.canvas.width, state.canvas.height);
             state.history.push(imageData);
             state.historyIndex++;
+            traceInvalidate();
             
             // Limit history size
             if (state.history.length > 20) {
@@ -2251,6 +3052,7 @@
                 state.historyIndex--;
                 state.ctx.putImageData(state.history[state.historyIndex], 0, 0);
                 updateHistogram();
+                traceInvalidate();
                 updateStatus('Undo');
             }
         }
@@ -2260,6 +3062,7 @@
                 state.historyIndex++;
                 state.ctx.putImageData(state.history[state.historyIndex], 0, 0);
                 updateHistogram();
+                traceInvalidate();
                 updateStatus('Redo');
             }
         }
@@ -2267,6 +3070,11 @@
         function resetImage() {
             if (!state.originalImage) return;
             
+            clearTimeout(state.ds.fullTimer);
+            state.ds.result = null;
+            state.ds.space = null;
+            state.compareSnapshot = null;
+            dsSyncUI();
             state.ctx.drawImage(state.originalImage, 0, 0);
             
             // Reset settings
@@ -2288,6 +3096,7 @@
             document.getElementById('histogram').checked = false;
             document.getElementById('sharpen').checked = false;
             document.getElementById('denoise').checked = false;
+            document.getElementById('clahe').checked = false;
             
             // Update displays
             document.getElementById('brightness-value').textContent = '0';
@@ -2301,38 +3110,51 @@
         }
         
         // Zoom and Pan
+        function setZoom(zoom, px = 0, py = 0) {
+            // Zoom around a point given relative to the container centre, keeping it fixed on screen
+            const z = Math.min(Math.max(zoom, 0.05), 20);
+            const k = z / state.zoom;
+            state.pan.x = px - (px - state.pan.x) * k;
+            state.pan.y = py - (py - state.pan.y) * k;
+            state.zoom = z;
+            updateZoom();
+        }
+
         function zoomIn() {
-            state.zoom = Math.min(state.zoom * 1.2, 10);
-            updateZoom();
+            setZoom(state.zoom * 1.2);
         }
-        
+
         function zoomOut() {
-            state.zoom = Math.max(state.zoom / 1.2, 0.1);
-            updateZoom();
+            setZoom(state.zoom / 1.2);
         }
-        
+
         function fitToScreen() {
             if (!state.image) return;
-            
+
             const container = document.getElementById('canvas-container');
             const scaleX = container.clientWidth / state.canvas.width;
             const scaleY = container.clientHeight / state.canvas.height;
             state.zoom = Math.min(scaleX, scaleY) * 0.9;
-            
-            updateZoom();
+
             centerCanvas();
+            updateZoom();
         }
-        
+
+        function applyTransform() {
+            const wrapper = document.getElementById('canvas-wrapper');
+            wrapper.style.transform = `translate(calc(-50% + ${state.pan.x}px), calc(-50% + ${state.pan.y}px)) scale(${state.zoom}) rotate(${state.rotation}deg)`;
+        }
+
         function updateZoom() {
-            const wrapper = document.getElementById('canvas-wrapper');
-            wrapper.style.transform = `scale(${state.zoom}) rotate(${state.rotation}deg)`;
+            applyTransform();
             document.getElementById('zoom-level').textContent = Math.round(state.zoom * 100) + '%';
+            updateCompareDivider();
+            renderOverlay();
         }
-        
+
         function centerCanvas() {
-            const wrapper = document.getElementById('canvas-wrapper');
-            wrapper.style.left = '50%';
-            wrapper.style.top = '50%';
+            state.pan = { x: 0, y: 0 };
+            applyTransform();
         }
         
         // Rotation and Flip
@@ -2371,69 +3193,83 @@
         }
         
         // Mouse Handlers
+        function imagePoint(e) {
+            const rect = state.canvas.getBoundingClientRect();
+            return { x: (e.clientX - rect.left) / state.zoom, y: (e.clientY - rect.top) / state.zoom };
+        }
+
+        function defaultCursor() {
+            return state.currentTool ? 'crosshair' : 'grab';
+        }
+
+        function nearSplitDivider(x) {
+            return state.split.on && Math.abs(x - state.split.pos * state.canvas.width) * state.zoom < 12;
+        }
+
         function handleMouseDown(e) {
-            if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
-                // Middle mouse or Shift+Left for panning
+            const { x, y } = imagePoint(e);
+            if (e.button === 0 && nearSplitDivider(x)) {
+                state.split.dragging = true;
+            } else if (e.button === 1 || (e.button === 0 && (e.shiftKey || state.spaceHeld || !state.currentTool))) {
+                // Middle mouse, Shift/Space + drag, or plain drag without a tool pans the view
                 state.isPanning = true;
-                state.panStart = { x: e.clientX, y: e.clientY };
+                state.panStart = { x: e.clientX - state.pan.x, y: e.clientY - state.pan.y };
                 state.canvas.classList.add('grabbing');
-            } else if (state.currentTool) {
+            } else if (e.button === 0 && state.currentTool) {
                 // Tool usage
                 state.isDrawing = true;
-                const rect = state.canvas.getBoundingClientRect();
-                const x = (e.clientX - rect.left) / state.zoom;
-                const y = (e.clientY - rect.top) / state.zoom;
                 handleToolStart(x, y);
             }
         }
-        
+
         function handleMouseMove(e) {
-            const rect = state.canvas.getBoundingClientRect();
-            const x = (e.clientX - rect.left) / state.zoom;
-            const y = (e.clientY - rect.top) / state.zoom;
-            
+            const { x, y } = imagePoint(e);
+
             // Update cursor info
-            if (state.image) {
+            if (state.image && x >= 0 && y >= 0 && x < state.canvas.width && y < state.canvas.height) {
                 const pixel = state.ctx.getImageData(x, y, 1, 1).data;
-                document.getElementById('cursor-info').textContent = 
+                document.getElementById('cursor-info').textContent =
                     `X: ${Math.round(x)} Y: ${Math.round(y)} | RGB(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`;
             }
-            
-            if (state.isPanning) {
-                const dx = e.clientX - state.panStart.x;
-                const dy = e.clientY - state.panStart.y;
-                
-                const wrapper = document.getElementById('canvas-wrapper');
-                const currentTransform = wrapper.style.transform;
-                // Update pan position while maintaining zoom
-                // This is simplified - full implementation would track position separately
+
+            if (state.split.dragging) {
+                state.split.pos = Math.min(1, Math.max(0, x / state.canvas.width));
+                updateCompareDivider();
+            } else if (state.isPanning) {
+                state.pan.x = e.clientX - state.panStart.x;
+                state.pan.y = e.clientY - state.panStart.y;
+                applyTransform();
             } else if (state.isDrawing && state.currentTool) {
                 handleToolMove(x, y);
+            } else {
+                if (state.currentTool) handleToolHover(x, y);
+                state.canvas.style.cursor = nearSplitDivider(x) ? 'ew-resize' : defaultCursor();
             }
         }
-        
+
         function handleMouseUp(e) {
-            if (state.isPanning) {
+            if (state.split.dragging) {
+                state.split.dragging = false;
+            } else if (state.isPanning) {
                 state.isPanning = false;
                 state.canvas.classList.remove('grabbing');
             } else if (state.isDrawing) {
                 state.isDrawing = false;
-                const rect = state.canvas.getBoundingClientRect();
-                const x = (e.clientX - rect.left) / state.zoom;
-                const y = (e.clientY - rect.top) / state.zoom;
+                const { x, y } = imagePoint(e);
                 handleToolEnd(x, y);
             }
         }
-        
+
         function handleWheel(e) {
+            if (!state.image) return;
             e.preventDefault();
-            
-            if (e.ctrlKey || e.metaKey) {
-                // Zoom with Ctrl+Wheel
-                const delta = e.deltaY > 0 ? 0.9 : 1.1;
-                state.zoom = Math.min(Math.max(state.zoom * delta, 0.1), 10);
-                updateZoom();
-            }
+
+            // Zoom toward the cursor; trackpad pinch arrives as Ctrl+wheel with small deltas
+            const box = document.getElementById('canvas-container').getBoundingClientRect();
+            const px = e.clientX - (box.left + box.width / 2);
+            const py = e.clientY - (box.top + box.height / 2);
+            const delta = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+            setZoom(state.zoom * Math.exp(-delta * (e.ctrlKey ? 0.01 : 0.0015)), px, py);
         }
         
         // Tool Handlers
@@ -2462,30 +3298,322 @@
         }
         
         function handleToolStart(x, y) {
-            // Implementation depends on current tool
-            console.log('Tool start:', state.currentTool, x, y);
+            const tool = state.currentTool;
+            if (tool === 'ds-roi') {
+                state.ds.roiStart = { x, y };
+            } else if (tool === 'measure-line' || tool === 'calibrate') {
+                state.measure.draft = [{ x, y }, { x, y }];
+                renderOverlay();
+            }
         }
-        
+
         function handleToolMove(x, y) {
-            // Implementation depends on current tool
-            console.log('Tool move:', state.currentTool, x, y);
+            const tool = state.currentTool;
+            if (tool === 'ds-roi') {
+                if (state.ds.roiStart) dsDrawRoi(dsRectFrom(state.ds.roiStart, x, y));
+            } else if ((tool === 'measure-line' || tool === 'calibrate') && state.measure.draft) {
+                state.measure.draft[1] = { x, y };
+                renderOverlay();
+            }
         }
-        
+
+        function handleToolHover(x, y) {
+            if ((state.currentTool === 'measure-area' || state.currentTool === 'measure-angle') && state.measure.draft) {
+                state.measure.hover = { x, y };
+                renderOverlay();
+            }
+        }
+
         function handleToolEnd(x, y) {
-            // Implementation depends on current tool
-            console.log('Tool end:', state.currentTool, x, y);
+            switch (state.currentTool) {
+                case 'ds-roi':
+                    dsFinishRoi(x, y);
+                    break;
+                case 'measure-line':
+                case 'calibrate':
+                    measureFinishLine(x, y);
+                    break;
+                case 'measure-area':
+                case 'measure-angle':
+                    measureAddPoint(x, y);
+                    break;
+                case 'trace-pick':
+                    traceAddSample(x, y);
+                    break;
+                case 'colorPicker':
+                    pickColorAt(x, y);
+                    break;
+            }
         }
-        
+
+        function cancelTool() {
+            state.currentTool = null;
+            state.measure.draft = null;
+            state.measure.hover = null;
+            state.ds.roiStart = null;
+            state.canvas.style.cursor = defaultCursor();
+            renderOverlay();
+            updateStatus('Ready');
+        }
+
         // Measurement Functions
+        const MEASURE_HELP = {
+            line: 'Drag to measure a distance',
+            area: 'Click the outline points; click the first point, double-click or press Enter to close',
+            angle: 'Click three points: start, vertex, end'
+        };
+
         function startMeasurement(type) {
+            if (!state.image) return;
             state.currentTool = 'measure-' + type;
-            updateStatus(`Measuring ${type}. Click on the image.`);
+            state.measure.draft = null;
+            state.measure.hover = null;
+            state.canvas.style.cursor = 'crosshair';
+            updateStatus(`${MEASURE_HELP[type]} · Esc to cancel`);
         }
-        
+
+        function measureDist(a, b) {
+            return Math.hypot(b.x - a.x, b.y - a.y);
+        }
+
+        function measureFinishLine(x, y) {
+            const draft = state.measure.draft;
+            state.measure.draft = null;
+            if (!draft) return;
+            draft[1] = { x, y };
+            const len = measureDist(draft[0], draft[1]);
+            if (len < 2) {
+                renderOverlay();
+                return;
+            }
+            if (state.currentTool === 'calibrate') {
+                const mm = parseFloat(document.getElementById('calibration-value').value);
+                state.pixelsPerMm = len / mm;
+                state.calibrated = true;
+                state.currentTool = null;
+                state.canvas.style.cursor = defaultCursor();
+                updateStatus(`Calibrated: ${state.pixelsPerMm.toFixed(3)} px/mm (${len.toFixed(1)} px = ${mm} mm)`);
+                renderMeasurementList();
+            } else {
+                measureAdd('line', draft);
+            }
+            renderOverlay();
+        }
+
+        function measureAddPoint(x, y) {
+            const tool = state.currentTool;
+            let draft = state.measure.draft;
+            if (!draft) {
+                state.measure.draft = [{ x, y }];
+                renderOverlay();
+                return;
+            }
+            const last = draft[draft.length - 1];
+            if (measureDist(last, { x, y }) * state.zoom < 3) return; // ignore double-click repeats
+            if (tool === 'measure-area' && draft.length >= 3 && measureDist(draft[0], { x, y }) * state.zoom < 10) {
+                measureCloseArea();
+                return;
+            }
+            draft.push({ x, y });
+            if (tool === 'measure-angle' && draft.length === 3) {
+                measureAdd('angle', draft);
+                state.measure.draft = null;
+            }
+            renderOverlay();
+        }
+
+        function measureCloseArea() {
+            const draft = state.measure.draft;
+            if (state.currentTool !== 'measure-area' || !draft || draft.length < 3) return;
+            measureAdd('area', draft);
+            state.measure.draft = null;
+            state.measure.hover = null;
+            renderOverlay();
+        }
+
+        function measureAdd(type, points) {
+            state.measurements.push({ id: ++state.measure.counter, type, points: points.map(p => ({ x: p.x, y: p.y })) });
+            renderMeasurementList();
+            const m = state.measurements[state.measurements.length - 1];
+            updateStatus(`#${m.id} ${measureCompute(m).text}`);
+        }
+
+        // Values are computed on demand so that recalibrating updates every measurement
+        function measureCompute(m) {
+            const cal = state.calibrated, ppmm = state.pixelsPerMm;
+            const p = m.points;
+            if (m.type === 'line') {
+                const px = measureDist(p[0], p[1]);
+                const value = cal ? px / ppmm : px, unit = cal ? 'mm' : 'px';
+                return { value, unit, text: `Distance ${value.toFixed(cal ? 2 : 1)} ${unit}` };
+            }
+            if (m.type === 'area') {
+                let a = 0, per = 0;
+                for (let i = 0; i < p.length; i++) {
+                    const q = p[(i + 1) % p.length];
+                    a += p[i].x * q.y - q.x * p[i].y;
+                    per += measureDist(p[i], q);
+                }
+                a = Math.abs(a) / 2;
+                const value = cal ? a / (ppmm * ppmm) : a, unit = cal ? 'mm²' : 'px²';
+                const perim = cal ? per / ppmm : per;
+                return { value, unit, text: `Area ${value.toFixed(cal ? 2 : 0)} ${unit} · perimeter ${perim.toFixed(1)} ${cal ? 'mm' : 'px'}` };
+            }
+            const a1 = Math.atan2(p[0].y - p[1].y, p[0].x - p[1].x);
+            const a2 = Math.atan2(p[2].y - p[1].y, p[2].x - p[1].x);
+            let deg = Math.abs(a1 - a2) * 180 / Math.PI;
+            if (deg > 180) deg = 360 - deg;
+            return { value: deg, unit: '°', text: `Angle ${deg.toFixed(1)}°` };
+        }
+
+        function renderMeasurementList() {
+            const list = document.getElementById('measurement-list');
+            const cal = document.getElementById('calibration-status');
+            cal.textContent = state.calibrated
+                ? `Calibrated: ${state.pixelsPerMm.toFixed(3)} px/mm`
+                : 'Not calibrated — values are in pixels.';
+            list.innerHTML = '';
+            if (!state.measurements.length) {
+                list.innerHTML = '<div class="ds-note">No measurements yet.</div>';
+                return;
+            }
+            const icons = { line: '📐', area: '📦', angle: '∠' };
+            state.measurements.forEach(m => {
+                const row = document.createElement('div');
+                row.className = 'measure-item';
+                const label = document.createElement('span');
+                label.textContent = `${icons[m.type]} #${m.id} ${measureCompute(m).text}`;
+                const del = document.createElement('button');
+                del.className = 'measure-del';
+                del.textContent = '✕';
+                del.title = 'Delete';
+                del.onclick = () => {
+                    state.measurements = state.measurements.filter(x => x !== m);
+                    renderMeasurementList();
+                    renderOverlay();
+                };
+                row.append(label, del);
+                list.appendChild(row);
+            });
+        }
+
         function clearMeasurements() {
             state.measurements = [];
-            state.overlayCtx.clearRect(0, 0, state.overlayCanvas.width, state.overlayCanvas.height);
+            state.measure.draft = null;
+            renderMeasurementList();
+            renderOverlay();
             updateStatus('Measurements cleared');
+        }
+
+        // Overlay: grid, DStretch region, measurements
+        function niceStep(v) {
+            const e = Math.pow(10, Math.floor(Math.log10(v)));
+            const f = v / e;
+            return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * e;
+        }
+
+        function gridSpacing() {
+            const target = 90 / state.zoom; // about 90 screen pixels between lines
+            if (state.calibrated) {
+                const mm = niceStep(target / state.pixelsPerMm);
+                return { step: mm * state.pixelsPerMm, label: `${mm} mm` };
+            }
+            const px = niceStep(target);
+            return { step: px, label: `${px} px` };
+        }
+
+        function overlayStroke(ctx, draw, color, width, halo = 0.55) {
+            // Dark halo under a bright line keeps it visible on any background
+            const z = state.zoom;
+            ctx.lineWidth = (width + 2) / z;
+            ctx.strokeStyle = `rgba(0, 0, 0, ${halo})`;
+            ctx.beginPath(); draw(); ctx.stroke();
+            ctx.lineWidth = width / z;
+            ctx.strokeStyle = color;
+            ctx.beginPath(); draw(); ctx.stroke();
+        }
+
+        function overlayLabel(ctx, text, x, y) {
+            const z = state.zoom, fs = 13 / z, pad = 4 / z;
+            ctx.font = `600 ${fs}px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
+            const w = ctx.measureText(text).width;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+            ctx.fillRect(x - w / 2 - pad, y - fs - pad * 2, w + pad * 2, fs + pad * 2);
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(text, x, y - pad);
+        }
+
+        function drawShape(ctx, type, pts, color, label) {
+            const z = state.zoom;
+            const path = (close) => () => {
+                pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+                if (close) ctx.closePath();
+            };
+            if (type === 'area' && pts.length >= 3) {
+                ctx.fillStyle = color + '26';
+                ctx.beginPath(); path(true)(); ctx.fill();
+            }
+            overlayStroke(ctx, path(type === 'area'), color, 2);
+            pts.forEach(p => {
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3.5 / z, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            if (label) {
+                const anchor = type === 'angle' ? pts[1]
+                    : { x: pts.reduce((s, p) => s + p.x, 0) / pts.length, y: Math.min(...pts.map(p => p.y)) };
+                overlayLabel(ctx, label, anchor.x, type === 'angle' ? anchor.y - 8 / z : anchor.y - 6 / z);
+            }
+        }
+
+        function renderOverlay() {
+            if (!state.overlayCtx) return;
+            const ctx = state.overlayCtx, W = state.overlayCanvas.width, H = state.overlayCanvas.height;
+            ctx.clearRect(0, 0, W, H);
+            if (!state.image) return;
+            ctx.save();
+
+            if (state.grid) {
+                const { step } = gridSpacing();
+                overlayStroke(ctx, () => {
+                    for (let x = step; x < W; x += step) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+                    for (let y = step; y < H; y += step) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+                }, 'rgba(255, 255, 255, 0.45)', 0.75, 0.18);
+            }
+
+            const r = state.ds.roiTemp || state.ds.roi;
+            if (r) {
+                ctx.save();
+                ctx.globalAlpha = state.ds.roiTemp || state.ds.useRoi ? 1 : 0.4;
+                ctx.lineWidth = 2 / state.zoom;
+                ctx.setLineDash([8 / state.zoom, 5 / state.zoom]);
+                ctx.strokeStyle = '#facc15';
+                ctx.fillStyle = 'rgba(250, 204, 21, 0.12)';
+                ctx.fillRect(r.x, r.y, r.w, r.h);
+                ctx.strokeRect(r.x, r.y, r.w, r.h);
+                ctx.restore();
+            }
+
+            const colors = { line: '#22d3ee', area: '#a3e635', angle: '#f472b6' };
+            state.measurements.forEach(m => drawShape(ctx, m.type, m.points, colors[m.type], `#${m.id} ${measureCompute(m).text}`));
+
+            const draft = state.measure.draft;
+            if (draft) {
+                const tool = state.currentTool;
+                const pts = draft.concat(state.measure.hover && tool !== 'measure-line' && tool !== 'calibrate' ? [state.measure.hover] : []);
+                if (tool === 'calibrate') {
+                    drawShape(ctx, 'line', pts, '#facc15', `${measureDist(pts[0], pts[1]).toFixed(1)} px = ${document.getElementById('calibration-value').value} mm`);
+                } else {
+                    const type = tool.replace('measure-', '');
+                    const live = (type === 'line' && pts.length === 2) || (type === 'angle' && pts.length === 3) || (type === 'area' && pts.length >= 3)
+                        ? measureCompute({ type, points: pts }).text : null;
+                    drawShape(ctx, type === 'area' && pts.length < 3 ? 'line' : type, pts, colors[type], live);
+                }
+            }
+            ctx.restore();
         }
         
         // UI Functions
@@ -2504,7 +3632,7 @@
             document.getElementById(`${tab}-tab`).classList.add('active');
             
             // Set active tab button
-            event.target.classList.add('active');
+            event.currentTarget.classList.add('active');
         }
         
         function toggleSidebar() {
@@ -2520,19 +3648,92 @@
         }
         
         function toggleComparison() {
-            // TODO: Implement before/after comparison view
-            updateStatus('Comparison view toggled');
+            if (!state.image) return;
+            
+            if (state.compareSnapshot) {
+                state.ctx.putImageData(state.compareSnapshot, 0, 0);
+                state.compareSnapshot = null;
+                updateStatus('Showing enhanced image');
+            } else {
+                state.compareSnapshot = state.ctx.getImageData(0, 0, state.canvas.width, state.canvas.height);
+                state.ctx.drawImage(state.originalImage, 0, 0);
+                updateStatus('Showing original image (press C to return)');
+            }
         }
         
+        function toggleSplitView() {
+            if (!state.image) return;
+            const cc = document.getElementById('compare-canvas');
+            state.split.on = !state.split.on;
+            cc.classList.toggle('hidden', !state.split.on);
+            document.getElementById('compare-divider').classList.toggle('hidden', !state.split.on);
+            document.getElementById('split-btn').classList.toggle('active', state.split.on);
+            if (state.split.on) {
+                cc.width = state.canvas.width;
+                cc.height = state.canvas.height;
+                cc.getContext('2d').drawImage(state.originalImage, 0, 0);
+                updateCompareDivider();
+                updateStatus('Split view: enhanced on the left, original on the right — drag the divider');
+            } else {
+                updateStatus('Split view off');
+            }
+        }
+
+        function updateCompareDivider() {
+            if (!state.split.on) return;
+            const pct = state.split.pos * 100;
+            document.getElementById('compare-canvas').style.clipPath = `inset(0 0 0 ${pct}%)`;
+            const divider = document.getElementById('compare-divider');
+            divider.style.left = `${pct}%`;
+            divider.style.width = `${2 / state.zoom}px`;
+            divider.style.boxShadow = `0 0 0 ${1 / state.zoom}px rgba(0, 0, 0, 0.5)`;
+        }
+
         function toggleGrid() {
-            // TODO: Implement grid overlay
-            updateStatus('Grid toggled');
+            if (!state.image) return;
+            state.grid = !state.grid;
+            document.getElementById('grid-btn').classList.toggle('active', state.grid);
+            document.getElementById('grid-toggle').checked = state.grid;
+            renderOverlay();
+            updateStatus(state.grid ? `Grid on — ${gridSpacing().label} spacing (adapts to zoom)` : 'Grid off');
         }
-        
+
         function colorPicker() {
+            if (!state.image) return;
             state.currentTool = 'colorPicker';
             state.canvas.style.cursor = 'crosshair';
-            updateStatus('Color picker activated');
+            updateStatus('Color picker: click a point (5×5 average) · Esc to cancel');
+        }
+
+        function sampleColor(x, y, radius = 2) {
+            const x0 = Math.max(0, Math.round(x) - radius), y0 = Math.max(0, Math.round(y) - radius);
+            const w = Math.min(state.canvas.width, Math.round(x) + radius + 1) - x0;
+            const h = Math.min(state.canvas.height, Math.round(y) + radius + 1) - y0;
+            if (w <= 0 || h <= 0) return null;
+            const d = state.ctx.getImageData(x0, y0, w, h).data;
+            let r = 0, g = 0, b = 0;
+            for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; }
+            const n = d.length / 4;
+            return [r / n, g / n, b / n];
+        }
+
+        function rgbToLab(r, g, b) {
+            const c0 = new Float32Array([r / 255]), c1 = new Float32Array([g / 255]), c2 = new Float32Array([b / 255]);
+            dsForward({ lab: true, B: DS_IDENTITY }, c0, c1, c2);
+            return [c0[0] * 100, c1[0] * 100, c2[0] * 100];
+        }
+
+        function rgbHex(rgb) {
+            return '#' + rgb.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+        }
+
+        function pickColorAt(x, y) {
+            const rgb = sampleColor(x, y);
+            if (!rgb) return;
+            const [L, a, b] = rgbToLab(...rgb);
+            const hex = rgbHex(rgb);
+            if (navigator.clipboard) navigator.clipboard.writeText(hex).catch(() => {});
+            updateStatus(`${hex} · RGB(${rgb.map(Math.round).join(', ')}) · L*a*b*(${L.toFixed(1)}, ${a.toFixed(1)}, ${b.toFixed(1)}) — copied`);
         }
         
         // Progress and Status
@@ -2630,26 +3831,1299 @@
                 return;
             }
             
-            const csv = 'Type,Value,Unit\n' + 
-                state.measurements.map(m => `${m.type},${m.value},${m.unit}`).join('\n');
-            
+            const csv = 'ID,Type,Value,Unit,Pixels per mm,Points (x y)\n' +
+                state.measurements.map(m => {
+                    const r = measureCompute(m);
+                    const pts = m.points.map(p => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join('; ');
+                    return `${m.id},${m.type},${r.value.toFixed(3)},${r.unit},${state.calibrated ? state.pixelsPerMm.toFixed(4) : ''},"${pts}"`;
+                }).join('\n');
+
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
             link.download = `measurements_${Date.now()}.csv`;
             link.click();
-            
+
             updateStatus('Measurements exported');
         }
-        
-        // Calibration
+
+        // Calibration: draw a line along a scale bar of known length
         function setCalibration() {
-            const value = document.getElementById('calibration-value').value;
-            if (value && !isNaN(value)) {
-                state.pixelsPerMm = parseFloat(value);
-                updateStatus(`Calibration set: ${value} pixels/mm`);
+            const value = parseFloat(document.getElementById('calibration-value').value);
+            if (!state.image) return;
+            if (!(value > 0)) {
+                alert('Enter the real length of the scale bar in mm first.');
+                return;
             }
+            state.currentTool = 'calibrate';
+            state.measure.draft = null;
+            state.canvas.style.cursor = 'crosshair';
+            updateStatus(`Drag along the scale bar (${value} mm) · Esc to cancel`);
+        }
+
+        function resetCalibration() {
+            state.calibrated = false;
+            state.pixelsPerMm = 1;
+            renderMeasurementList();
+            renderOverlay();
+            updateStatus('Calibration cleared');
+        }
+        
+        // ===== DStretch Engine =====
+        // Decorrelation stretch in the style of DStretch: convert to a colorspace, whiten the
+        // channel covariance along its principal components, rescale to a target spread set by
+        // Scale, bias the chroma toward a pigment hue, then convert back to RGB.
+        const DS_YUV = [
+            [0.299, 0.587, 0.114],
+            [0.615, -0.51499, -0.10001],   // V: red ↔ cyan
+            [0.14713, 0.28886, -0.436]     // -U: yellow ↔ blue
+        ];
+        const DS_IDENTITY = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+        const DS_PREVIEW_MAX = 1200;
+        const DS_SIGMA_PER_SCALE = 0.012;
+
+        // Hue angles live in the a*b*-like chroma plane: 0° red, 90° yellow, 180° green, 270° blue
+        const DS_SPACES = [
+            { id: 'YDS', base: 'yuv', lumaMix: 0.6, gPos: 1.15, gNeg: 1.15, gPerp: 1.15, desc: 'General purpose YUV stretch — a good first choice' },
+            { id: 'YBR', base: 'yuv', angle: 20, gPos: 1.6, gNeg: 0.9, gPerp: 0.85, lumaMix: 0.6, desc: 'Bright and pinkish reds' },
+            { id: 'YRE', base: 'yuv', angle: 35, gPos: 2.0, gNeg: 0.8, gPerp: 0.7, lumaMix: 0.5, desc: 'Red ochre pigments' },
+            { id: 'YRD', base: 'yuv', angle: 10, gPos: 2.0, gNeg: 0.8, gPerp: 0.75, lumaMix: 0.4, lumaGain: 0.9, desc: 'Faint or dark reds' },
+            { id: 'YYE', base: 'yuv', angle: 85, gPos: 2.0, gNeg: 0.8, gPerp: 0.7, lumaMix: 0.5, desc: 'Yellow pigments' },
+            { id: 'YBG', base: 'yuv', angle: 200, gPos: 2.0, gNeg: 0.8, gPerp: 0.7, lumaMix: 0.5, desc: 'Green and blue-green pigments' },
+            { id: 'YBL', base: 'yuv', angle: 250, gPos: 2.0, gNeg: 0.8, gPerp: 0.7, lumaMix: 0.5, desc: 'Blue pigments' },
+            { id: 'YBK', base: 'yuv', lumaGain: 1.5, gPos: 0.8, gNeg: 0.8, gPerp: 0.8, desc: 'Black and dark pigments' },
+            { id: 'YWE', base: 'yuv', angle: 265, gPos: 1.2, gNeg: 1.0, gPerp: 0.9, lumaGain: 1.3, desc: 'White pigments' },
+            { id: 'YUV', base: 'yuv', desc: 'Plain decorrelation stretch in YUV' },
+            { id: 'YXX', base: 'yuv', custom: true, desc: 'User-defined: YUV-type matrix with your own color bias' },
+            { id: 'LDS', base: 'lab', lumaMix: 0.6, gPos: 1.15, gNeg: 1.15, gPerp: 1.15, desc: 'General purpose CIELAB stretch' },
+            { id: 'LRE', base: 'lab', angle: 40, gPos: 2.0, gNeg: 0.8, gPerp: 0.7, lumaMix: 0.5, desc: 'Red ochre pigments (Lab)' },
+            { id: 'LRD', base: 'lab', angle: 15, gPos: 2.0, gNeg: 0.8, gPerp: 0.75, lumaMix: 0.4, lumaGain: 0.9, desc: 'Faint or dark reds (Lab)' },
+            { id: 'LYE', base: 'lab', angle: 90, gPos: 2.0, gNeg: 0.8, gPerp: 0.7, lumaMix: 0.5, desc: 'Yellow pigments (Lab)' },
+            { id: 'LBG', base: 'lab', angle: 200, gPos: 2.0, gNeg: 0.8, gPerp: 0.7, lumaMix: 0.5, desc: 'Green and blue-green pigments (Lab)' },
+            { id: 'LBL', base: 'lab', angle: 255, gPos: 2.0, gNeg: 0.8, gPerp: 0.7, lumaMix: 0.5, desc: 'Blue pigments, e.g. Egyptian blue (Lab)' },
+            { id: 'LBK', base: 'lab', lumaGain: 1.5, gPos: 0.8, gNeg: 0.8, gPerp: 0.8, desc: 'Black and dark pigments (Lab)' },
+            { id: 'LWE', base: 'lab', angle: 270, gPos: 1.2, gNeg: 1.0, gPerp: 0.9, lumaGain: 1.3, desc: 'White pigments (Lab)' },
+            { id: 'LAB', base: 'lab', desc: 'Plain decorrelation stretch in CIELAB' },
+            { id: 'LAX', base: 'lab', gPos: 1.5, gNeg: 1.5, gPerp: 1.5, neutral: 1, desc: 'Exaggerated Lab with a neutral background — very faint traces' },
+            { id: 'LXX', base: 'lab', custom: true, desc: 'User-defined: Lab with your own matrix and color bias' },
+            { id: 'RGB', base: 'rgb', desc: 'Classic decorrelation stretch in RGB' },
+            { id: 'RGB0', base: 'rgb', neutral: 1, desc: 'RGB stretch with the color cast removed (gray mean)' },
+            { id: 'CRGB', base: 'rgb', stat: 'corr', desc: 'RGB stretch from the correlation matrix; keeps channel balance' }
+        ];
+        const DS_SPACE_MAP = Object.fromEntries(DS_SPACES.map(s => [s.id, s]));
+        const DS_BIAS_DEFAULTS = { angle: 0, gPos: 1, gNeg: 1, gPerp: 1, lumaMix: 1, lumaGain: 1, neutral: 0 };
+        const DS_DEFAULTS = {
+            space: null, scale: 15, useRoi: false,
+            balance: false, flatten: false, flattenRadius: 100, flattenStrength: 100,
+            hue: 0, sat: 0, light: 0, autoContrast: 'off', clip: 0.5,
+            histEq: false, clahe: false, claheClip: 2.5, claheTiles: 8, detail: 0, detailRadius: 8,
+            invert: false, swap: 'rgb', channel: 'all', live: true
+        };
+
+        // sRGB ↔ linear lookup tables (4096 steps)
+        const DS_TO_LIN = new Float32Array(4096);
+        const DS_TO_SRGB = new Float32Array(4096);
+        for (let i = 0; i < 4096; i++) {
+            const v = i / 4095;
+            DS_TO_LIN[i] = v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+            DS_TO_SRGB[i] = v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055;
+        }
+
+        function dsLut(lut, v) {
+            return lut[v <= 0 ? 0 : v >= 1 ? 4095 : (v * 4095 + 0.5) | 0];
+        }
+
+        function dsInvert3(m) {
+            const [a, b, c] = m[0], [d, e, f] = m[1], [g, h, i] = m[2];
+            const A = e * i - f * h, B = -(d * i - f * g), C = d * h - e * g;
+            const det = a * A + b * B + c * C;
+            if (!isFinite(det) || Math.abs(det) < 1e-9) return null;
+            return [
+                [A / det, -(b * i - c * h) / det, (b * f - c * e) / det],
+                [B / det, (a * i - c * g) / det, -(a * f - c * d) / det],
+                [C / det, -(a * h - b * g) / det, (a * e - b * d) / det]
+            ];
+        }
+
+        const DS_YUV_INV = dsInvert3(DS_YUV);
+
+        // Jacobi eigen-decomposition of a symmetric 3×3 matrix; eigenvectors are columns, sorted by eigenvalue
+        function dsEigenSym3(M) {
+            const a = M.map(r => r.slice());
+            const v = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+            for (let sweep = 0; sweep < 50; sweep++) {
+                const off = a[0][1] * a[0][1] + a[0][2] * a[0][2] + a[1][2] * a[1][2];
+                if (off < 1e-24) break;
+                for (const [p, q] of [[0, 1], [0, 2], [1, 2]]) {
+                    if (Math.abs(a[p][q]) < 1e-30) continue;
+                    const theta = (a[q][q] - a[p][p]) / (2 * a[p][q]);
+                    const t = (theta >= 0 ? 1 : -1) / (Math.abs(theta) + Math.sqrt(theta * theta + 1));
+                    const c = 1 / Math.sqrt(t * t + 1), s = t * c;
+                    for (let k = 0; k < 3; k++) {
+                        const akp = a[k][p], akq = a[k][q];
+                        a[k][p] = c * akp - s * akq;
+                        a[k][q] = s * akp + c * akq;
+                    }
+                    for (let k = 0; k < 3; k++) {
+                        const apk = a[p][k], aqk = a[q][k];
+                        a[p][k] = c * apk - s * aqk;
+                        a[q][k] = s * apk + c * aqk;
+                    }
+                    for (let k = 0; k < 3; k++) {
+                        const vkp = v[k][p], vkq = v[k][q];
+                        v[k][p] = c * vkp - s * vkq;
+                        v[k][q] = s * vkp + c * vkq;
+                    }
+                }
+            }
+            const order = [0, 1, 2].sort((x, y) => a[y][y] - a[x][x]);
+            return {
+                values: order.map(k => a[k][k]),
+                vectors: [0, 1, 2].map(r => order.map(k => v[r][k]))
+            };
+        }
+
+        // Symmetric whitening matrix V·diag(1/√λ)·Vᵀ
+        function dsWhiten(eig) {
+            const lmax = Math.max(...eig.values);
+            const inv = eig.values.map(l => 1 / Math.sqrt(Math.max(l, lmax * 1e-4, 1e-10)));
+            const V = eig.vectors;
+            return [0, 1, 2].map(i => [0, 1, 2].map(j =>
+                V[i][0] * inv[0] * V[j][0] + V[i][1] * inv[1] * V[j][1] + V[i][2] * inv[2] * V[j][2]));
+        }
+
+        function dsBiasFor(id, custom) {
+            const def = DS_SPACE_MAP[id];
+            const src = !def || def.custom ? custom : def;
+            const out = {};
+            for (const k in DS_BIAS_DEFAULTS) out[k] = src[k] !== undefined ? src[k] : DS_BIAS_DEFAULTS[k];
+            return out;
+        }
+
+        function dsResolveSpace(cfg) {
+            const def = DS_SPACE_MAP[cfg.space] || DS_SPACE_MAP.YDS;
+            let B = DS_IDENTITY;
+            if (def.base === 'yuv') B = def.custom ? cfg.matrices.YXX : DS_YUV;
+            else if (def.base === 'lab' && def.custom) B = cfg.matrices.LXX;
+            return Object.assign(dsBiasFor(def.id, cfg.custom), {
+                id: def.id,
+                lab: def.base === 'lab',
+                chroma: def.base !== 'rgb',
+                stat: def.stat || 'cov',
+                B,
+                Binv: dsInvert3(B) || DS_IDENTITY,
+                channels: def.base === 'rgb' ? ['R', 'G', 'B'] : def.base === 'lab' ? ['L*', 'a*', 'b*'] : ['Y', 'V', '−U']
+            });
+        }
+
+        function dsApplyMatrix3(m, c0, c1, c2) {
+            const [[a, b, c], [d, e, f], [g, h, k]] = m;
+            for (let i = 0; i < c0.length; i++) {
+                const x = c0[i], y = c1[i], z = c2[i];
+                c0[i] = a * x + b * y + c * z;
+                c1[i] = d * x + e * y + f * z;
+                c2[i] = g * x + h * y + k * z;
+            }
+        }
+
+        // RGB (0..1, sRGB-encoded) → colorspace, in place. Lab is normalised to L/100, a/100, b/100.
+        function dsForward(sp, c0, c1, c2) {
+            if (sp.lab) {
+                const e = 216 / 24389, k = 24389 / 27;
+                const f = t => t > e ? Math.cbrt(t) : (k * t + 16) / 116;
+                for (let i = 0; i < c0.length; i++) {
+                    const r = dsLut(DS_TO_LIN, c0[i]), g = dsLut(DS_TO_LIN, c1[i]), b = dsLut(DS_TO_LIN, c2[i]);
+                    const fx = f((0.4124564 * r + 0.3575761 * g + 0.1804375 * b) / 0.95047);
+                    const fy = f(0.2126729 * r + 0.7151522 * g + 0.0721750 * b);
+                    const fz = f((0.0193339 * r + 0.1191920 * g + 0.9503041 * b) / 1.08883);
+                    c0[i] = 1.16 * fy - 0.16;
+                    c1[i] = 5 * (fx - fy);
+                    c2[i] = 2 * (fy - fz);
+                }
+            }
+            if (sp.B !== DS_IDENTITY) dsApplyMatrix3(sp.B, c0, c1, c2);
+        }
+
+        function dsInverse(sp, c0, c1, c2) {
+            if (sp.B !== DS_IDENTITY) dsApplyMatrix3(sp.Binv, c0, c1, c2);
+            if (sp.lab) {
+                const e = 216 / 24389, k = 24389 / 27;
+                const finv = f => { const f3 = f * f * f; return f3 > e ? f3 : (116 * f - 16) / k; };
+                for (let i = 0; i < c0.length; i++) {
+                    const fy = (c0[i] + 0.16) / 1.16, fx = fy + c1[i] / 5, fz = fy - c2[i] / 2;
+                    const X = 0.95047 * finv(fx), Y = finv(fy), Z = 1.08883 * finv(fz);
+                    c0[i] = dsLut(DS_TO_SRGB, 3.2404542 * X - 1.5371385 * Y - 0.4985314 * Z);
+                    c1[i] = dsLut(DS_TO_SRGB, -0.9692660 * X + 1.8760108 * Y + 0.0415560 * Z);
+                    c2[i] = dsLut(DS_TO_SRGB, 0.0556434 * X - 0.2040259 * Y + 1.0572252 * Z);
+                }
+            }
+        }
+
+        // Mean and covariance from a subsample of the image or the selected region
+        function dsStats(c0, c1, c2, w, h, roi) {
+            let x0 = 0, y0 = 0, x1 = w, y1 = h;
+            if (roi) {
+                x0 = Math.max(0, Math.floor(roi.x));
+                y0 = Math.max(0, Math.floor(roi.y));
+                x1 = Math.min(w, Math.ceil(roi.x + roi.w));
+                y1 = Math.min(h, Math.ceil(roi.y + roi.h));
+                if (x1 - x0 < 2 || y1 - y0 < 2) { x0 = 0; y0 = 0; x1 = w; y1 = h; }
+            }
+            const step = Math.max(1, Math.floor(Math.sqrt((x1 - x0) * (y1 - y0) / 250000)));
+            let n = 0, s0 = 0, s1 = 0, s2 = 0, s00 = 0, s01 = 0, s02 = 0, s11 = 0, s12 = 0, s22 = 0;
+            for (let y = y0; y < y1; y += step) {
+                for (let x = x0, i = y * w + x0; x < x1; x += step, i += step) {
+                    const a = c0[i], b = c1[i], c = c2[i];
+                    n++; s0 += a; s1 += b; s2 += c;
+                    s00 += a * a; s01 += a * b; s02 += a * c; s11 += b * b; s12 += b * c; s22 += c * c;
+                }
+            }
+            const m = [s0 / n, s1 / n, s2 / n];
+            const v01 = s01 / n - m[0] * m[1], v02 = s02 / n - m[0] * m[2], v12 = s12 / n - m[1] * m[2];
+            const cov = [
+                [s00 / n - m[0] * m[0], v01, v02],
+                [v01, s11 / n - m[1] * m[1], v12],
+                [v02, v12, s22 / n - m[2] * m[2]]
+            ];
+            return { mean: m, cov, n, roi: !!roi };
+        }
+
+        function dsStretchMatrix(st, sp, sigma) {
+            const C = st.cov;
+            if (sp.stat === 'corr') {
+                const sd = [0, 1, 2].map(i => Math.sqrt(Math.max(C[i][i], 1e-10)));
+                const R = C.map((row, i) => row.map((v, j) => v / (sd[i] * sd[j])));
+                const eig = dsEigenSym3(R);
+                const W = dsWhiten(eig);
+                const k = sigma / ((sd[0] + sd[1] + sd[2]) / 3);
+                return { T: [0, 1, 2].map(i => [0, 1, 2].map(j => k * sd[i] * W[i][j] / sd[j])), eig, M: R };
+            }
+            const eig = dsEigenSym3(C);
+            return { T: dsWhiten(eig).map(r => r.map(v => v * sigma)), eig, M: C };
+        }
+
+        function dsGrayWorld(c0, c1, c2) {
+            const step = Math.max(1, Math.floor(c0.length / 250000));
+            let a = 0, b = 0, c = 0, n = 0;
+            for (let i = 0; i < c0.length; i += step) { a += c0[i]; b += c1[i]; c += c2[i]; n++; }
+            const means = [a / n, b / n, c / n], gray = (means[0] + means[1] + means[2]) / 3;
+            [c0, c1, c2].forEach((arr, k) => {
+                if (means[k] < 1e-6) return;
+                const f = gray / means[k];
+                for (let i = 0; i < arr.length; i++) arr[i] *= f;
+            });
+        }
+
+        function dsBoxBlur(a, w, h, r) {
+            const tmp = new Float32Array(a.length), n = 2 * r + 1;
+            for (let y = 0; y < h; y++) {
+                const row = y * w;
+                let acc = 0;
+                for (let k = -r; k <= r; k++) acc += a[row + Math.min(w - 1, Math.max(0, k))];
+                for (let x = 0; x < w; x++) {
+                    tmp[row + x] = acc / n;
+                    acc += a[row + Math.min(w - 1, x + r + 1)] - a[row + Math.max(0, x - r)];
+                }
+            }
+            for (let x = 0; x < w; x++) {
+                let acc = 0;
+                for (let k = -r; k <= r; k++) acc += tmp[Math.min(h - 1, Math.max(0, k)) * w + x];
+                for (let y = 0; y < h; y++) {
+                    a[y * w + x] = acc / n;
+                    acc += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x];
+                }
+            }
+        }
+
+        // Remove slow illumination gradients: subtract a heavy blur (computed at reduced size)
+        function dsFlatten(chs, w, h, radius, strength) {
+            const f = Math.max(1, Math.floor(radius / 8));
+            const sw = Math.ceil(w / f), sh = Math.ceil(h / f), r = Math.max(1, Math.round(radius / f));
+            const cnt = new Float32Array(sw * sh);
+            for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) cnt[((y / f) | 0) * sw + ((x / f) | 0)]++;
+            const axis = (len, slen) => {
+                const i0 = new Int32Array(len), i1 = new Int32Array(len), wt = new Float32Array(len);
+                for (let p = 0; p < len; p++) {
+                    const fp = Math.min(slen - 1, Math.max(0, (p + 0.5) / f - 0.5));
+                    i0[p] = Math.floor(fp);
+                    i1[p] = Math.min(slen - 1, i0[p] + 1);
+                    wt[p] = fp - i0[p];
+                }
+                return { i0, i1, wt };
+            };
+            const ax = axis(w, sw), ay = axis(h, sh);
+            for (const ch of chs) {
+                const small = new Float32Array(sw * sh);
+                for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) small[((y / f) | 0) * sw + ((x / f) | 0)] += ch[y * w + x];
+                let mean = 0;
+                for (let k = 0; k < small.length; k++) small[k] /= cnt[k];
+                for (let pass = 0; pass < 3; pass++) dsBoxBlur(small, sw, sh, r);
+                for (let k = 0; k < small.length; k++) mean += small[k];
+                mean /= small.length;
+                for (let y = 0; y < h; y++) {
+                    const r0 = ay.i0[y] * sw, r1 = ay.i1[y] * sw, wy = ay.wt[y];
+                    for (let x = 0; x < w; x++) {
+                        const x0 = ax.i0[x], x1 = ax.i1[x], wx = ax.wt[x];
+                        const top = small[r0 + x0] + (small[r0 + x1] - small[r0 + x0]) * wx;
+                        const bot = small[r1 + x0] + (small[r1 + x1] - small[r1 + x0]) * wx;
+                        ch[y * w + x] -= strength * (top + (bot - top) * wy - mean);
+                    }
+                }
+            }
+        }
+
+        function dsEqualizeLuma(c0, c1, c2) {
+            const BINS = 1024, hist = new Float64Array(BINS), N = c0.length;
+            const bin = i => {
+                const y = 0.299 * c0[i] + 0.587 * c1[i] + 0.114 * c2[i];
+                return y <= 0 ? 0 : y >= 1 ? BINS - 1 : (y * (BINS - 1) + 0.5) | 0;
+            };
+            for (let i = 0; i < N; i++) hist[bin(i)]++;
+            const map = new Float32Array(BINS);
+            let acc = 0, cdfMin = -1;
+            for (let k = 0; k < BINS; k++) {
+                acc += hist[k];
+                if (cdfMin < 0 && acc > 0) cdfMin = acc;
+                map[k] = acc;
+            }
+            const denom = Math.max(1, N - cdfMin);
+            for (let k = 0; k < BINS; k++) map[k] = Math.max(0, (map[k] - cdfMin) / denom);
+            for (let i = 0; i < N; i++) {
+                const y = 0.299 * c0[i] + 0.587 * c1[i] + 0.114 * c2[i];
+                const d = map[bin(i)] - y;
+                c0[i] += d; c1[i] += d; c2[i] += d;
+            }
+        }
+
+        function dsAutoContrast(chs, clip, linked) {
+            const N = chs[0].length, step = Math.max(1, Math.floor(N / 200000));
+            const range = arrs => {
+                const samples = new Float32Array(Math.ceil(N / step) * arrs.length);
+                let n = 0;
+                for (const arr of arrs) for (let i = 0; i < N; i += step) samples[n++] = arr[i];
+                const s = samples.subarray(0, n).sort();
+                return [s[Math.floor(clip * (n - 1))], s[Math.ceil((1 - clip) * (n - 1))]];
+            };
+            const stretch = (arr, [lo, hi]) => {
+                if (hi - lo < 1e-6) return;
+                const k = 1 / (hi - lo);
+                for (let i = 0; i < N; i++) arr[i] = (arr[i] - lo) * k;
+            };
+            if (linked) {
+                const r = range(chs);
+                chs.forEach(arr => stretch(arr, r));
+            } else {
+                chs.forEach(arr => stretch(arr, range([arr])));
+            }
+        }
+
+        // Contrast-limited adaptive histogram equalization on lightness, bilinear between tiles
+        function dsClahe(c0, c1, c2, w, h, clipLimit, tiles) {
+            const N = w * h, tx = Math.max(1, tiles), ty = Math.max(1, Math.round(tiles * h / w));
+            const tw = w / tx, th = h / ty;
+            const lum = new Float32Array(N), bins = new Uint8Array(N);
+            for (let i = 0; i < N; i++) {
+                const y = Math.min(1, Math.max(0, 0.299 * c0[i] + 0.587 * c1[i] + 0.114 * c2[i]));
+                lum[i] = y;
+                bins[i] = (y * 255 + 0.5) | 0;
+            }
+            const maps = new Float32Array(tx * ty * 256), hist = new Float64Array(256);
+            for (let j = 0; j < ty; j++) {
+                for (let i = 0; i < tx; i++) {
+                    const x0 = Math.floor(i * tw), x1 = Math.floor((i + 1) * tw);
+                    const y0 = Math.floor(j * th), y1 = Math.floor((j + 1) * th);
+                    hist.fill(0);
+                    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) hist[bins[y * w + x]]++;
+                    const n = Math.max(1, (x1 - x0) * (y1 - y0));
+                    const limit = Math.max(1, clipLimit * n / 256);
+                    let excess = 0;
+                    for (let k = 0; k < 256; k++) {
+                        if (hist[k] > limit) { excess += hist[k] - limit; hist[k] = limit; }
+                    }
+                    const add = excess / 256, base = (j * tx + i) * 256;
+                    let acc = 0;
+                    for (let k = 0; k < 256; k++) {
+                        acc += hist[k] + add;
+                        maps[base + k] = acc / n;
+                    }
+                }
+            }
+            const axis = (len, t, cells) => {
+                const i0 = new Int32Array(len), i1 = new Int32Array(len), wt = new Float32Array(len);
+                for (let p = 0; p < len; p++) {
+                    const f = Math.min(cells - 1, Math.max(0, (p + 0.5) / t - 0.5));
+                    i0[p] = Math.floor(f);
+                    i1[p] = Math.min(cells - 1, i0[p] + 1);
+                    wt[p] = f - i0[p];
+                }
+                return { i0, i1, wt };
+            };
+            const ax = axis(w, tw, tx), ay = axis(h, th, ty);
+            for (let y = 0; y < h; y++) {
+                const r0 = ay.i0[y] * tx, r1 = ay.i1[y] * tx, wy = ay.wt[y];
+                for (let x = 0; x < w; x++) {
+                    const i = y * w + x, b = bins[i], wx = ax.wt[x];
+                    const m00 = maps[(r0 + ax.i0[x]) * 256 + b], m01 = maps[(r0 + ax.i1[x]) * 256 + b];
+                    const m10 = maps[(r1 + ax.i0[x]) * 256 + b], m11 = maps[(r1 + ax.i1[x]) * 256 + b];
+                    const top = m00 + (m01 - m00) * wx, bot = m10 + (m11 - m10) * wx;
+                    const d = top + (bot - top) * wy - lum[i];
+                    c0[i] += d; c1[i] += d; c2[i] += d;
+                }
+            }
+        }
+        
+        // High-pass boost of lightness: brings out engravings, incisions and brush strokes
+        function dsDetail(c0, c1, c2, w, h, amount, radius) {
+            const N = w * h, blur = new Float32Array(N);
+            for (let i = 0; i < N; i++) blur[i] = 0.299 * c0[i] + 0.587 * c1[i] + 0.114 * c2[i];
+            const lum = blur.slice();
+            const r = Math.max(1, Math.round(radius));
+            dsBoxBlur(blur, w, h, r);
+            dsBoxBlur(blur, w, h, r);
+            for (let i = 0; i < N; i++) {
+                const d = amount * (lum[i] - blur[i]);
+                c0[i] += d; c1[i] += d; c2[i] += d;
+            }
+        }
+        
+        function dsPost(c0, c1, c2, cfg, w, h) {
+            const N = c0.length;
+            if (cfg.hue || cfg.sat || cfg.light) {
+                const th = cfg.hue * Math.PI / 180, cs = Math.cos(th), sn = Math.sin(th);
+                const k = 1 + cfg.sat / 100, dl = cfg.light / 100;
+                const F = DS_YUV, I = DS_YUV_INV;
+                for (let i = 0; i < N; i++) {
+                    const r = c0[i], g = c1[i], b = c2[i];
+                    const y = F[0][0] * r + F[0][1] * g + F[0][2] * b + dl;
+                    const a = F[1][0] * r + F[1][1] * g + F[1][2] * b;
+                    const bb = F[2][0] * r + F[2][1] * g + F[2][2] * b;
+                    const a2 = (cs * a - sn * bb) * k, b2 = (sn * a + cs * bb) * k;
+                    c0[i] = I[0][0] * y + I[0][1] * a2 + I[0][2] * b2;
+                    c1[i] = I[1][0] * y + I[1][1] * a2 + I[1][2] * b2;
+                    c2[i] = I[2][0] * y + I[2][1] * a2 + I[2][2] * b2;
+                }
+            }
+            if (cfg.detail) dsDetail(c0, c1, c2, w, h, cfg.detail / 100, cfg.detailRadius * (cfg.pxScale || 1));
+            if (cfg.histEq) dsEqualizeLuma(c0, c1, c2);
+            if (cfg.clahe) dsClahe(c0, c1, c2, w, h, cfg.claheClip, cfg.claheTiles);
+            if (cfg.autoContrast && cfg.autoContrast !== 'off') {
+                dsAutoContrast([c0, c1, c2], cfg.clip / 100, cfg.autoContrast === 'linked');
+            }
+            if (cfg.invert) {
+                for (let i = 0; i < N; i++) { c0[i] = 1 - c0[i]; c1[i] = 1 - c1[i]; c2[i] = 1 - c2[i]; }
+            }
+        }
+
+        // src: RGBA bytes. Returns { data (RGBA Uint8ClampedArray), width, height, info }
+        function dsProcess(src, w, h, cfg) {
+            const sp = dsResolveSpace(cfg);
+            const N = w * h;
+            const c0 = new Float32Array(N), c1 = new Float32Array(N), c2 = new Float32Array(N);
+            for (let i = 0, j = 0; i < N; i++, j += 4) {
+                c0[i] = src[j] / 255;
+                c1[i] = src[j + 1] / 255;
+                c2[i] = src[j + 2] / 255;
+            }
+
+            const px = cfg.pxScale || 1;
+            const roi = cfg.roi ? { x: cfg.roi.x * px, y: cfg.roi.y * px, w: cfg.roi.w * px, h: cfg.roi.h * px } : null;
+            if (cfg.balance) dsGrayWorld(c0, c1, c2);
+            if (cfg.flatten) dsFlatten([c0, c1, c2], w, h, Math.max(1, cfg.flattenRadius * px), cfg.flattenStrength / 100);
+
+            dsForward(sp, c0, c1, c2);
+            const st = dsStats(c0, c1, c2, w, h, roi);
+            const sigma = cfg.scale * DS_SIGMA_PER_SCALE;
+            const { T, eig, M } = dsStretchMatrix(st, sp, sigma);
+            const m = st.mean;
+
+            // Output centre: keep the mean, optionally pulled to neutral gray
+            let o0 = m[0], o1 = m[1], o2 = m[2];
+            if (sp.chroma) {
+                o1 *= 1 - sp.neutral;
+                o2 *= 1 - sp.neutral;
+            } else if (sp.neutral) {
+                const g = (m[0] + m[1] + m[2]) / 3;
+                o0 += (g - o0) * sp.neutral;
+                o1 += (g - o1) * sp.neutral;
+                o2 += (g - o2) * sp.neutral;
+            }
+
+            // Lightness row blends the stretched and the original lightness
+            const lm = sp.chroma ? sp.lumaMix : 1;
+            const t00 = T[0][0] * lm + (1 - lm), t01 = T[0][1] * lm, t02 = T[0][2] * lm;
+            const [t10, t11, t12] = T[1], [t20, t21, t22] = T[2];
+            const th = sp.angle * Math.PI / 180, ux = Math.cos(th), uy = Math.sin(th);
+            const lg = sp.lumaGain, gPos = sp.gPos, gNeg = sp.gNeg, gPerp = sp.gPerp;
+
+            for (let i = 0; i < N; i++) {
+                const d0 = c0[i] - m[0], d1 = c1[i] - m[1], d2 = c2[i] - m[2];
+                let s0 = t00 * d0 + t01 * d1 + t02 * d2;
+                let s1 = t10 * d0 + t11 * d1 + t12 * d2;
+                let s2 = t20 * d0 + t21 * d1 + t22 * d2;
+                if (sp.chroma) {
+                    // Chroma bias: separate gains toward / away from the target hue and across it
+                    s0 *= lg;
+                    let p = ux * s1 + uy * s2;
+                    const q = (ux * s2 - uy * s1) * gPerp;
+                    p *= p > 0 ? gPos : gNeg;
+                    s1 = p * ux - q * uy;
+                    s2 = p * uy + q * ux;
+                }
+                c0[i] = o0 + s0;
+                c1[i] = o1 + s1;
+                c2[i] = o2 + s2;
+            }
+
+            const ch = cfg.channel === 'all' || cfg.channel === undefined ? -1 : parseInt(cfg.channel, 10);
+            if (ch >= 0) {
+                const arr = [c0, c1, c2][ch], o = [o0, o1, o2][ch], k = 1 / (6 * sigma);
+                for (let i = 0; i < N; i++) {
+                    const v = 0.5 + (arr[i] - o) * k;
+                    c0[i] = v; c1[i] = v; c2[i] = v;
+                }
+            } else {
+                dsInverse(sp, c0, c1, c2);
+            }
+
+            dsPost(c0, c1, c2, cfg, w, h);
+
+            const order = { rgb: [0, 1, 2], rbg: [0, 2, 1], grb: [1, 0, 2], gbr: [1, 2, 0], brg: [2, 0, 1], bgr: [2, 1, 0] }[cfg.swap] || [0, 1, 2];
+            const chans = [c0, c1, c2], A = chans[order[0]], Bc = chans[order[1]], Cc = chans[order[2]];
+            const out = new Uint8ClampedArray(N * 4);
+            for (let i = 0, j = 0; i < N; i++, j += 4) {
+                out[j] = A[i] * 255;
+                out[j + 1] = Bc[i] * 255;
+                out[j + 2] = Cc[i] * 255;
+                out[j + 3] = src[j + 3];
+            }
+
+            return {
+                data: out, width: w, height: h,
+                info: {
+                    space: sp.id, channels: sp.channels, scale: cfg.scale, sigma,
+                    mean: m, matrixLabel: sp.stat === 'corr' ? 'Correlation' : 'Covariance', M,
+                    eigenvalues: eig.values, eigenvectors: eig.vectors, T, samples: st.n, roi: st.roi
+                }
+            };
+        }
+        // ===== End DStretch Engine =====
+
+        // ===== DStretch UI =====
+        function dsCreateState() {
+            return Object.assign({}, DS_DEFAULTS, {
+                custom: Object.assign({}, DS_BIAS_DEFAULTS),
+                matrices: { YXX: DS_YUV.map(r => r.slice()), LXX: DS_IDENTITY.map(r => r.slice()) },
+                roi: null,
+                roiStart: null,
+                roiTemp: null,
+                result: null,
+                fullSrc: null,
+                previewSrc: null,
+                lastInfo: null,
+                tmpCanvas: null,
+                fullTimer: null,
+                rafPending: false
+            });
+        }
+
+        function dsDefaultConfig(space) {
+            return Object.assign({}, DS_DEFAULTS, {
+                space, roi: null, custom: DS_BIAS_DEFAULTS,
+                matrices: { YXX: DS_YUV, LXX: DS_IDENTITY }, pxScale: 1
+            });
+        }
+
+        function dsCurrentConfig(pxScale) {
+            const ds = state.ds;
+            return {
+                space: ds.space, scale: ds.scale, roi: ds.useRoi ? ds.roi : null,
+                balance: ds.balance, flatten: ds.flatten, flattenRadius: ds.flattenRadius, flattenStrength: ds.flattenStrength,
+                custom: ds.custom, matrices: ds.matrices,
+                hue: ds.hue, sat: ds.sat, light: ds.light, autoContrast: ds.autoContrast, clip: ds.clip,
+                histEq: ds.histEq, clahe: ds.clahe, claheClip: ds.claheClip, claheTiles: ds.claheTiles,
+                detail: ds.detail, detailRadius: ds.detailRadius,
+                invert: ds.invert, swap: ds.swap, channel: ds.channel,
+                pxScale: pxScale || 1
+            };
+        }
+
+        function dsInit() {
+            state.ds = dsCreateState();
+            dsBuildSpaceGrid();
+
+            document.querySelectorAll('[data-ds]').forEach(el => {
+                el.addEventListener(el.type === 'range' ? 'input' : 'change', () => {
+                    const key = el.dataset.ds;
+                    const val = el.type === 'checkbox' ? el.checked : el.type === 'range' ? parseFloat(el.value) : el.value;
+                    if ('dsBias' in el.dataset) {
+                        dsOnBiasInput(key, val);
+                    } else {
+                        state.ds[key] = val;
+                        if (key === 'useRoi') dsDrawRoi();
+                        dsUpdate();
+                    }
+                });
+            });
+
+            const orig = document.getElementById('ds-original-btn');
+            ['mousedown', 'touchstart'].forEach(ev => orig.addEventListener(ev, (e) => {
+                e.preventDefault();
+                dsHoldOriginal(true);
+            }));
+            ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(ev => orig.addEventListener(ev, () => dsHoldOriginal(false)));
+
+            document.getElementById('ds-import-input').addEventListener('change', dsImportSettings);
+            dsSyncUI();
+        }
+
+        function dsBuildSpaceGrid() {
+            const root = document.getElementById('ds-space-grid');
+            root.innerHTML = '';
+            [['yuv', 'YUV family'], ['lab', 'CIELAB family'], ['rgb', 'RGB family']].forEach(([base, label]) => {
+                const heading = document.createElement('div');
+                heading.className = 'ds-group-label';
+                heading.textContent = label;
+                const grid = document.createElement('div');
+                grid.className = 'ds-space-grid';
+                DS_SPACES.filter(s => s.base === base).forEach(s => {
+                    const btn = document.createElement('button');
+                    btn.className = 'ds-space-btn';
+                    btn.textContent = s.id;
+                    btn.title = s.desc;
+                    btn.dataset.space = s.id;
+                    btn.onclick = () => dsSelectSpace(s.id);
+                    grid.appendChild(btn);
+                });
+                root.append(heading, grid);
+            });
+        }
+
+        function dsFormat(el, val) {
+            if (typeof val !== 'number') return val;
+            const step = parseFloat(el.step) || 1;
+            const decimals = step >= 1 ? 0 : step >= 0.1 ? 1 : 2;
+            return val.toFixed(decimals) + (el.dataset.unit || '');
+        }
+
+        function dsSyncUI() {
+            const ds = state.ds, def = DS_SPACE_MAP[ds.space];
+            document.querySelectorAll('.ds-space-btn').forEach(b => b.classList.toggle('active', b.dataset.space === ds.space));
+            document.getElementById('ds-current').textContent = def ? `${def.id} ${ds.scale}` : '—';
+            document.getElementById('ds-desc').textContent = def ? def.desc : 'Select a colorspace to start.';
+
+            const bias = dsBiasFor(ds.space || 'YXX', ds.custom);
+            document.querySelectorAll('[data-ds]').forEach(el => {
+                const key = el.dataset.ds;
+                const val = 'dsBias' in el.dataset ? bias[key] : ds[key];
+                if (el.type === 'checkbox') el.checked = !!val;
+                else if (document.activeElement !== el) el.value = val;
+                const label = document.getElementById(`ds-${key}-value`);
+                if (label) label.textContent = dsFormat(el, val);
+            });
+
+            let note = 'Custom color bias for the YXX / LXX colorspaces.';
+            if (def && def.base === 'rgb') note = 'RGB colorspaces have no color bias; editing a slider switches to YXX.';
+            else if (def && !def.custom) note = `Showing the ${def.id} settings — editing a slider creates a custom ${def.base === 'lab' ? 'LXX' : 'YXX'} from them.`;
+            document.getElementById('ds-bias-note').textContent = note;
+
+            const r = ds.roi;
+            document.getElementById('ds-roi-info').textContent = r
+                ? `Region ${Math.round(r.w)} × ${Math.round(r.h)} px at (${Math.round(r.x)}, ${Math.round(r.y)})${ds.useRoi ? '' : ' — not in use'}`
+                : 'No region — statistics use the whole image.';
+        }
+
+        function dsOnBiasInput(key, val) {
+            const def = DS_SPACE_MAP[state.ds.space];
+            state.ds.custom = Object.assign(dsBiasFor(state.ds.space || 'YXX', state.ds.custom), { [key]: val });
+            if (!def || !def.custom) state.ds.space = def && def.base === 'lab' ? 'LXX' : 'YXX';
+            dsUpdate();
+        }
+
+        function dsSelectSpace(id) {
+            if (!state.image) {
+                updateStatus('Load an image first');
+                return;
+            }
+            state.ds.space = id;
+            dsUpdate(true);
+        }
+
+        function dsForgetImage() {
+            const ds = state.ds;
+            clearTimeout(ds.fullTimer);
+            Object.assign(ds, { space: null, result: null, fullSrc: null, previewSrc: null, lastInfo: null, roi: null, roiStart: null, useRoi: false });
+            state.compareSnapshot = null;
+            dsSyncUI();
+        }
+
+        function dsEnsureSources() {
+            const ds = state.ds;
+            if (ds.fullSrc) return;
+            const img = state.originalImage, w = img.width, h = img.height;
+            const c = document.createElement('canvas');
+            c.width = w;
+            c.height = h;
+            const cx = c.getContext('2d');
+            cx.drawImage(img, 0, 0);
+            ds.fullSrc = cx.getImageData(0, 0, w, h);
+
+            const s = Math.min(1, DS_PREVIEW_MAX / Math.max(w, h));
+            if (s < 1) {
+                c.width = Math.round(w * s);
+                c.height = Math.round(h * s);
+                cx.imageSmoothingQuality = 'high';
+                cx.drawImage(img, 0, 0, c.width, c.height);
+                ds.previewSrc = { img: cx.getImageData(0, 0, c.width, c.height), scale: c.width / w };
+            } else {
+                ds.previewSrc = { img: ds.fullSrc, scale: 1 };
+            }
+        }
+
+        // Live preview renders a downscaled copy immediately; full resolution follows once input pauses
+        function dsUpdate(force) {
+            dsSyncUI();
+            const ds = state.ds;
+            if (!state.image || !ds.space || (!ds.live && !force)) return;
+            dsEnsureSources();
+            clearTimeout(ds.fullTimer);
+            if (ds.previewSrc.scale < 1) {
+                if (!ds.rafPending) {
+                    ds.rafPending = true;
+                    requestAnimationFrame(() => {
+                        ds.rafPending = false;
+                        dsRenderPreview();
+                    });
+                }
+                ds.fullTimer = setTimeout(dsRenderFull, 500);
+            } else {
+                ds.fullTimer = setTimeout(dsRenderFull, 30);
+            }
+        }
+
+        function dsRenderPreview() {
+            const ds = state.ds;
+            if (!state.image || !ds.space) return;
+            const p = ds.previewSrc;
+            const res = dsProcess(p.img.data, p.img.width, p.img.height, dsCurrentConfig(p.scale));
+            ds.lastInfo = res.info;
+            if (!ds.tmpCanvas) ds.tmpCanvas = document.createElement('canvas');
+            const t = ds.tmpCanvas;
+            t.width = res.width;
+            t.height = res.height;
+            t.getContext('2d').putImageData(new ImageData(res.data, res.width, res.height), 0, 0);
+            state.compareSnapshot = null;
+            state.ctx.drawImage(t, 0, 0, state.canvas.width, state.canvas.height);
+            updateStatus(`DStretch ${ds.space} ${ds.scale} — preview`);
+        }
+
+        function dsRenderFull() {
+            const ds = state.ds;
+            if (!state.image || !ds.space) return;
+            clearTimeout(ds.fullTimer);
+            dsEnsureSources();
+            const src = ds.fullSrc;
+            const big = src.width * src.height > 4e6;
+            const run = () => {
+                const res = dsProcess(src.data, src.width, src.height, dsCurrentConfig(1));
+                ds.result = new ImageData(res.data, res.width, res.height);
+                ds.lastInfo = res.info;
+                applyFilters();
+                saveToHistory();
+                if (big) hideProgress();
+                updateStatus(`DStretch ${ds.space} ${ds.scale} applied`);
+                if (document.getElementById('ds-matrix-modal').classList.contains('show')) dsShowMatrix();
+            };
+            if (big) {
+                showProgress('DStretch...', `${ds.space} · scale ${ds.scale}`);
+                setTimeout(run, 30);
+            } else {
+                run();
+            }
+        }
+
+        function dsHoldOriginal(on) {
+            if (on !== !!state.compareSnapshot) toggleComparison();
+        }
+
+        function dsResetAll() {
+            const old = state.ds;
+            clearTimeout(old.fullTimer);
+            state.ds = Object.assign(dsCreateState(), { fullSrc: old.fullSrc, previewSrc: old.previewSrc, tmpCanvas: old.tmpCanvas });
+            dsDrawRoi();
+            dsSyncUI();
+            if (state.image) {
+                applyFilters();
+                saveToHistory();
+                updateStatus('DStretch reset — showing original');
+            }
+        }
+
+        // Statistics region
+        function dsStartRoi() {
+            if (!state.image) return;
+            state.currentTool = 'ds-roi';
+            state.canvas.style.cursor = 'crosshair';
+            updateStatus('Drag on the image to select the statistics region');
+        }
+
+        function dsRectFrom(start, x, y) {
+            const cx = v => Math.min(state.canvas.width, Math.max(0, v));
+            const cy = v => Math.min(state.canvas.height, Math.max(0, v));
+            const x0 = cx(Math.min(start.x, x)), x1 = cx(Math.max(start.x, x));
+            const y0 = cy(Math.min(start.y, y)), y1 = cy(Math.max(start.y, y));
+            return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+        }
+
+        function dsFinishRoi(x, y) {
+            const ds = state.ds;
+            if (ds.roiStart) {
+                const rect = dsRectFrom(ds.roiStart, x, y);
+                if (rect.w >= 4 && rect.h >= 4) {
+                    ds.roi = rect;
+                    ds.useRoi = true;
+                }
+            }
+            ds.roiStart = null;
+            state.currentTool = null;
+            dsDrawRoi();
+            dsUpdate();
+        }
+
+        function dsClearRoi() {
+            state.ds.roi = null;
+            state.ds.useRoi = false;
+            dsDrawRoi();
+            dsUpdate();
+        }
+
+        function dsDrawRoi(tempRect) {
+            state.ds.roiTemp = tempRect || null;
+            renderOverlay();
+        }
+
+        // Gallery of all colorspaces
+        function dsOpenGallery() {
+            if (!state.image) {
+                updateStatus('Load an image first');
+                return;
+            }
+            const img = state.originalImage;
+            const s = Math.min(1, 240 / Math.max(img.width, img.height));
+            const tw = Math.max(1, Math.round(img.width * s)), th = Math.max(1, Math.round(img.height * s));
+            const c = document.createElement('canvas');
+            c.width = tw;
+            c.height = th;
+            const cx = c.getContext('2d');
+            cx.imageSmoothingQuality = 'high';
+            cx.drawImage(img, 0, 0, tw, th);
+            const thumb = cx.getImageData(0, 0, tw, th);
+
+            const grid = document.getElementById('ds-gallery');
+            grid.innerHTML = '';
+            document.getElementById('ds-gallery-modal').classList.add('show');
+
+            [{ id: null, desc: 'Original image' }].concat(DS_SPACES).forEach((sp, k) => {
+                const card = document.createElement('button');
+                card.className = 'ds-thumb' + (sp.id && sp.id === state.ds.space ? ' active' : '');
+                card.title = sp.desc;
+                const cv = document.createElement('canvas');
+                cv.width = tw;
+                cv.height = th;
+                const label = document.createElement('span');
+                label.textContent = sp.id || 'Original';
+                card.append(cv, label);
+                card.onclick = () => {
+                    closeModal('ds-gallery-modal');
+                    if (sp.id) dsSelectSpace(sp.id);
+                };
+                grid.appendChild(card);
+                setTimeout(() => {
+                    if (!sp.id) {
+                        cv.getContext('2d').putImageData(thumb, 0, 0);
+                        return;
+                    }
+                    const cfg = dsCurrentConfig(s);
+                    cfg.space = sp.id;
+                    const res = dsProcess(thumb.data, tw, th, cfg);
+                    cv.getContext('2d').putImageData(new ImageData(res.data, tw, th), 0, 0);
+                }, k * 10);
+            });
+        }
+
+        // Matrix / statistics view and custom matrix editor
+        function dsFmtNum(v) {
+            return v !== 0 && Math.abs(v) < 0.001 ? v.toExponential(2) : v.toFixed(4);
+        }
+
+        function dsMatrixTable(title, rows, rowLabels, colLabels) {
+            let html = `<div class="ds-matrix-block"><div class="ds-matrix-title">${title}</div><table class="ds-matrix"><tr><th></th>`;
+            html += colLabels.map(c => `<th>${c}</th>`).join('') + '</tr>';
+            rows.forEach((r, i) => {
+                html += `<tr><th>${rowLabels[i]}</th>${r.map(v => `<td>${dsFmtNum(v)}</td>`).join('')}</tr>`;
+            });
+            return html + '</table></div>';
+        }
+
+        function dsShowMatrix() {
+            const ds = state.ds;
+            if (state.image && ds.space && !ds.lastInfo) {
+                dsEnsureSources();
+                const p = ds.previewSrc;
+                ds.lastInfo = dsProcess(p.img.data, p.img.width, p.img.height, dsCurrentConfig(p.scale)).info;
+            }
+            const info = ds.space ? ds.lastInfo : null;
+            let html = '';
+            if (info) {
+                const pcs = ['PC1', 'PC2', 'PC3'];
+                html += `<p class="ds-matrix-meta">${info.space} · scale ${info.scale} · target σ ${info.sigma.toFixed(3)} · ${info.samples.toLocaleString()} samples from ${info.roi ? 'the selected region' : 'the whole image'}</p>`;
+                html += dsMatrixTable('Channel means', [info.mean], ['μ'], info.channels);
+                html += dsMatrixTable(`${info.matrixLabel} matrix`, info.M, info.channels, info.channels);
+                html += dsMatrixTable('Eigenvalues (spread along each principal component)', [info.eigenvalues], ['λ'], pcs);
+                html += dsMatrixTable('Eigenvectors (columns)', info.eigenvectors, info.channels, pcs);
+                html += dsMatrixTable('Stretch transform T  (out = μ + T · (in − μ), before color bias)', info.T, info.channels, info.channels);
+            } else {
+                html += '<p class="ds-matrix-meta">Load an image and pick a colorspace to see its statistics.</p>';
+            }
+
+            const def = DS_SPACE_MAP[ds.space];
+            const key = def && def.base === 'lab' ? 'LXX' : 'YXX';
+            const m = ds.matrices[key];
+            html += `<h3 class="ds-matrix-h">${key} base matrix</h3>`;
+            html += `<p class="ds-matrix-meta">${key === 'YXX'
+                ? 'Rows map R, G, B to a lightness channel and two chroma channels. Default is YUV.'
+                : 'Rows mix L*, a*, b* into the three channels to stretch. Default is identity.'}</p>`;
+            html += '<div class="ds-matrix-edit">';
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 3; c++) html += `<input type="number" step="0.01" id="ds-m-${r}-${c}" value="${+m[r][c].toFixed(5)}">`;
+            }
+            html += '</div>';
+            html += `<div class="btn-group"><button class="btn btn-primary btn-sm" onclick="dsApplyMatrix('${key}')">Apply to ${key}</button>`;
+            html += `<button class="btn btn-secondary btn-sm" onclick="dsResetMatrix('${key}')">Reset to default</button></div>`;
+
+            document.getElementById('ds-matrix-body').innerHTML = html;
+            document.getElementById('ds-matrix-modal').classList.add('show');
+        }
+
+        function dsApplyMatrix(key) {
+            const m = [0, 1, 2].map(r => [0, 1, 2].map(c => parseFloat(document.getElementById(`ds-m-${r}-${c}`).value) || 0));
+            if (!dsInvert3(m)) {
+                alert('This matrix cannot be inverted. Make sure the rows are independent.');
+                return;
+            }
+            state.ds.matrices[key] = m;
+            state.ds.lastInfo = null;
+            dsSelectSpace(key);
+            dsShowMatrix();
+        }
+
+        function dsResetMatrix(key) {
+            state.ds.matrices[key] = (key === 'YXX' ? DS_YUV : DS_IDENTITY).map(r => r.slice());
+            state.ds.lastInfo = null;
+            if (state.ds.space === key) dsUpdate(true);
+            dsShowMatrix();
+        }
+
+        // Save with DStretch-style file name, e.g. panel_yre15.png
+        function dsSave() {
+            if (!state.image) return;
+            const base = (state.fileName || 'image').replace(/\.[^.]+$/, '');
+            const tag = state.ds.space ? `_${state.ds.space.toLowerCase()}${state.ds.scale}` : '';
+            const link = document.createElement('a');
+            link.download = `${base}${tag}.png`;
+            link.href = state.canvas.toDataURL('image/png');
+            link.click();
+            updateStatus(`Saved ${link.download}`);
+        }
+
+        const DS_SETTING_KEYS = Object.keys(DS_DEFAULTS).concat(['custom', 'matrices', 'roi']);
+
+        function dsExportSettings() {
+            const out = { app: 'ArchaeoVision DStretch', version: 1 };
+            DS_SETTING_KEYS.forEach(k => { out[k] = state.ds[k]; });
+            const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `dstretch_${(state.ds.space || 'settings').toLowerCase()}.json`;
+            link.click();
+            updateStatus('DStretch settings exported');
+        }
+
+        function dsImportSettings(e) {
+            const file = e.target.files[0];
+            e.target.value = '';
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                let data;
+                try {
+                    data = JSON.parse(reader.result);
+                } catch (err) {
+                    alert('Could not read settings: ' + err.message);
+                    return;
+                }
+                DS_SETTING_KEYS.forEach(k => {
+                    if (data[k] !== undefined) state.ds[k] = data[k];
+                });
+                if (!DS_SPACE_MAP[state.ds.space]) state.ds.space = null;
+                state.ds.lastInfo = null;
+                if (!state.image) state.ds.space = null;
+                dsDrawRoi();
+                dsUpdate(true);
+                updateStatus('DStretch settings imported');
+            };
+            reader.readAsText(file);
+        }
+
+        // ===== Pigment Finder & Digital Tracing =====
+        // Selects pixels whose CIELAB color lies within a ΔE tolerance of sampled pigment colors.
+        // It works on the current canvas, so it is usually run on a DStretch result.
+        const TRACE_DEFAULTS = { tolerance: 12, lWeight: 0.3, minArea: 20, smooth: true, mode: 'highlight', color: '#ff00ff', opacity: 0.65 };
+
+        function traceInit() {
+            state.trace = Object.assign({}, TRACE_DEFAULTS, { samples: [], lab: null, mask: null, count: 0, timer: null });
+            document.querySelectorAll('[data-trace]').forEach(el => {
+                el.addEventListener(el.type === 'range' ? 'input' : 'change', () => {
+                    const key = el.dataset.trace;
+                    state.trace[key] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? parseFloat(el.value) : el.value;
+                    traceSyncUI();
+                    if (key === 'mode' || key === 'color' || key === 'opacity') traceRender();
+                    else traceSchedule();
+                });
+            });
+            traceSyncUI();
+        }
+
+        function traceSyncUI() {
+            const t = state.trace;
+            document.querySelectorAll('[data-trace]').forEach(el => {
+                const val = t[el.dataset.trace];
+                if (el.type === 'checkbox') el.checked = !!val;
+                else if (document.activeElement !== el) el.value = val;
+                const label = document.getElementById(`trace-${el.dataset.trace}-value`);
+                if (label) label.textContent = dsFormat(el, val);
+            });
+
+            const box = document.getElementById('trace-samples');
+            box.innerHTML = '';
+            if (!t.samples.length) box.innerHTML = '<div class="ds-note">No pigment samples yet.</div>';
+            t.samples.forEach((s, k) => {
+                const chip = document.createElement('button');
+                chip.className = 'trace-swatch';
+                chip.style.background = s.hex;
+                chip.title = `${s.hex} · L*a*b*(${s.L.toFixed(1)}, ${s.a.toFixed(1)}, ${s.b.toFixed(1)}) — click to remove`;
+                chip.onclick = () => {
+                    t.samples.splice(k, 1);
+                    traceSyncUI();
+                    traceSchedule();
+                };
+                box.appendChild(chip);
+            });
+
+            const stats = document.getElementById('trace-stats');
+            if (!t.mask) {
+                stats.textContent = 'Pick pigment colors to start.';
+            } else {
+                const N = t.mask.length, pct = 100 * t.count / N;
+                const area = state.calibrated ? `${(t.count / (state.pixelsPerMm ** 2)).toFixed(1)} mm²` : `${t.count.toLocaleString()} px`;
+                stats.textContent = `Selected ${pct.toFixed(2)}% of the image · ${area}`;
+            }
+        }
+
+        function traceStartPick() {
+            if (!state.image) return;
+            state.currentTool = 'trace-pick';
+            state.canvas.style.cursor = 'crosshair';
+            updateStatus('Click pigment areas to add color samples · Esc when done');
+        }
+
+        function traceAddSample(x, y) {
+            const rgb = sampleColor(x, y, 2);
+            if (!rgb) return;
+            const [L, a, b] = rgbToLab(...rgb);
+            state.trace.samples.push({ L, a, b, hex: rgbHex(rgb) });
+            traceSyncUI();
+            traceCompute();
+            updateStatus(`Added sample ${rgbHex(rgb)} (${state.trace.samples.length} total) · keep clicking or press Esc`);
+        }
+
+        function traceClearSamples() {
+            state.trace.samples = [];
+            state.trace.mask = null;
+            traceSyncUI();
+            traceRender();
+        }
+
+        // Called whenever the canvas content is committed; the Lab cache then refreshes lazily
+        function traceInvalidate() {
+            if (!state.trace) return;
+            state.trace.lab = null;
+            if (state.trace.samples.length) traceSchedule();
+        }
+
+        function traceSchedule() {
+            clearTimeout(state.trace.timer);
+            state.trace.timer = setTimeout(traceCompute, 200);
+        }
+
+        function traceEnsureLab() {
+            const t = state.trace;
+            if (t.lab && t.lab.w === state.canvas.width && t.lab.h === state.canvas.height) return;
+            const w = state.canvas.width, h = state.canvas.height, N = w * h;
+            const d = state.ctx.getImageData(0, 0, w, h).data;
+            const L = new Float32Array(N), A = new Float32Array(N), B = new Float32Array(N);
+            for (let i = 0, j = 0; i < N; i++, j += 4) {
+                L[i] = d[j] / 255; A[i] = d[j + 1] / 255; B[i] = d[j + 2] / 255;
+            }
+            dsForward({ lab: true, B: DS_IDENTITY }, L, A, B);
+            t.lab = { L, A, B, w, h };
+        }
+
+        function traceCompute() {
+            const t = state.trace;
+            clearTimeout(t.timer);
+            if (!state.image || !t.samples.length) {
+                t.mask = null;
+                traceSyncUI();
+                traceRender();
+                return;
+            }
+            traceEnsureLab();
+            const { L, A, B, w, h } = t.lab, N = w * h;
+            const tol2 = (t.tolerance / 100) ** 2, lw2 = t.lWeight ** 2;
+            const S = t.samples.map(s => [s.L / 100, s.a / 100, s.b / 100]);
+            let mask = new Uint8Array(N);
+            for (let i = 0; i < N; i++) {
+                const l = L[i], a = A[i], b = B[i];
+                for (let k = 0; k < S.length; k++) {
+                    const dl = l - S[k][0], da = a - S[k][1], db = b - S[k][2];
+                    if (lw2 * dl * dl + da * da + db * db <= tol2) { mask[i] = 1; break; }
+                }
+            }
+            if (t.smooth) mask = traceMajority(mask, w, h);
+            if (t.minArea > 0) traceRemoveSpecks(mask, w, h, t.minArea);
+            let count = 0;
+            for (let i = 0; i < N; i++) count += mask[i];
+            t.mask = mask;
+            t.count = count;
+            traceSyncUI();
+            traceRender();
+        }
+
+        // 3×3 majority vote smooths ragged edges and fills pinholes
+        function traceMajority(mask, w, h) {
+            const out = new Uint8Array(mask.length);
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    let n = 0;
+                    for (let dy = -1; dy <= 1; dy++) {
+                        const yy = Math.min(h - 1, Math.max(0, y + dy)) * w;
+                        for (let dx = -1; dx <= 1; dx++) n += mask[yy + Math.min(w - 1, Math.max(0, x + dx))];
+                    }
+                    out[y * w + x] = n >= 5 ? 1 : 0;
+                }
+            }
+            return out;
+        }
+
+        // Drop 4-connected components smaller than minArea pixels
+        function traceRemoveSpecks(mask, w, h, minArea) {
+            const queue = new Int32Array(mask.length);
+            for (let start = 0; start < mask.length; start++) {
+                if (mask[start] !== 1) continue;
+                let head = 0, tail = 0;
+                queue[tail++] = start;
+                mask[start] = 2;
+                while (head < tail) {
+                    const i = queue[head++], x = i % w;
+                    if (x > 0 && mask[i - 1] === 1) { mask[i - 1] = 2; queue[tail++] = i - 1; }
+                    if (x < w - 1 && mask[i + 1] === 1) { mask[i + 1] = 2; queue[tail++] = i + 1; }
+                    if (i >= w && mask[i - w] === 1) { mask[i - w] = 2; queue[tail++] = i - w; }
+                    if (i < mask.length - w && mask[i + w] === 1) { mask[i + w] = 2; queue[tail++] = i + w; }
+                }
+                const keep = tail >= minArea ? 3 : 0;
+                for (let k = 0; k < tail; k++) mask[queue[k]] = keep;
+            }
+            for (let i = 0; i < mask.length; i++) mask[i] = mask[i] === 3 ? 1 : 0;
+        }
+
+        function traceLayer(kind) {
+            // kind: 'highlight' (colored, translucent), 'tracing' (black on white), 'layer' (colored, opaque, transparent bg)
+            const t = state.trace, w = state.canvas.width, h = state.canvas.height;
+            const out = new ImageData(w, h), d = out.data;
+            const hex = t.color.replace('#', '');
+            const rgb = [0, 2, 4].map(k => parseInt(hex.substr(k, 2), 16));
+            const alpha = kind === 'highlight' ? Math.round(255 * t.opacity) : 255;
+            for (let i = 0, j = 0; i < t.mask.length; i++, j += 4) {
+                if (kind === 'tracing') {
+                    const v = t.mask[i] ? 0 : 255;
+                    d[j] = v; d[j + 1] = v; d[j + 2] = v; d[j + 3] = 255;
+                } else if (t.mask[i]) {
+                    d[j] = rgb[0]; d[j + 1] = rgb[1]; d[j + 2] = rgb[2]; d[j + 3] = alpha;
+                }
+            }
+            return out;
+        }
+
+        function traceRender() {
+            const cv = document.getElementById('trace-canvas'), t = state.trace;
+            if (!t.mask || t.mode === 'off' || !state.image) {
+                cv.classList.add('hidden');
+                return;
+            }
+            cv.width = state.canvas.width;
+            cv.height = state.canvas.height;
+            cv.getContext('2d').putImageData(traceLayer(t.mode === 'tracing' ? 'tracing' : 'highlight'), 0, 0);
+            cv.classList.remove('hidden');
+        }
+
+        function traceExport(kind) {
+            const t = state.trace;
+            if (!t.mask) {
+                alert('Pick pigment colors first.');
+                return;
+            }
+            const c = document.createElement('canvas');
+            c.width = state.canvas.width;
+            c.height = state.canvas.height;
+            const cx = c.getContext('2d');
+            if (kind === 'composite') {
+                cx.drawImage(state.canvas, 0, 0);
+                const layer = document.createElement('canvas');
+                layer.width = c.width;
+                layer.height = c.height;
+                layer.getContext('2d').putImageData(traceLayer('highlight'), 0, 0);
+                cx.drawImage(layer, 0, 0);
+            } else {
+                cx.putImageData(traceLayer(kind), 0, 0);
+            }
+            const base = (state.fileName || 'image').replace(/\.[^.]+$/, '');
+            const link = document.createElement('a');
+            link.download = `${base}_${{ tracing: 'tracing', layer: 'tracing_layer', composite: 'tracing_overlay' }[kind]}.png`;
+            link.href = c.toDataURL('image/png');
+            link.click();
+            updateStatus(`Saved ${link.download}`);
+        }
+
+        function traceForgetImage() {
+            const t = state.trace;
+            clearTimeout(t.timer);
+            t.lab = null;
+            t.mask = null;
+            traceSyncUI();
+            traceRender();
+        }
+
+        // Installable app: offline cache, and files opened from the OS when installed
+        if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => console.warn('Service worker registration failed', err));
+            });
+        }
+        if ('launchQueue' in window) {
+            window.launchQueue.setConsumer(async (params) => {
+                if (params.files && params.files.length) handleFile(await params.files[0].getFile());
+            });
         }
         
         // Close modals on outside click
